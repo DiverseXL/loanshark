@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: format, lint, typecheck, test
+    runs-on: ubuntu-latest
+    steps:
+      # Action commits are pinned so a moved tag cannot change what runs.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 26.13.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify-env
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      # Unit tests use no network. Live-chain tests are skipped unless LIVE_CHAIN=1.
+      - run: pnpm test
+
+  secrets:
+    name: secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      # The gitleaks binary is pinned by version and SHA-256 rather than using
+      # the action, which would resolve the latest release at run time and can
+      # require a licence on organisation-owned repositories.
+      - name: gitleaks 8.30.1
+        run: |
+          set -euo pipefail
+          curl -sSfL -o gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz gitleaks
+          ./gitleaks detect --source . --redact --no-banner --exit-code 1

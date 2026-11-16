@@ -158,3 +158,14 @@ What remains unknown, and is not concluded here:
 ## Task 3 and Task 4: blocked on the signature fixture
 
 `fixtures/qorex-signarbitrary.json` is not present in the repository. Task 3 says to stop and ask when it is missing, and Task 4 cannot run without a real QoreX response. No signature was reconstructed, retyped or generated in its place, and Task 5 was not started because it depends on Task 4 passing. The verifier itself is ready and recorded (source-lock claims 17 to 19).
+
+## Task 7: CI
+
+`.github/workflows/ci.yml` runs on `push` to `main` and on every `pull_request`:
+
+- job `verify`: `actions/checkout` and `actions/setup-node` pinned by commit, `pnpm/action-setup` pinned by commit with `12.21.0`, Node `26.13.0`, then `pnpm install --frozen-lockfile`, `pnpm verify-env`, `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`.
+- job `secrets`: the gitleaks 8.30.1 linux-x64 binary, verified against the published SHA-256 before running `gitleaks detect --source . --redact`.
+
+Unit tests need no network: no test currently opens a socket, and the live-chain test required by Task 5 does not exist yet (Task 5 was not started).
+
+Status: the workflow file parses as YAML (`js-yaml` 4.1.1) and every command in the `verify` job has been run locally with the same result recorded below, but the workflow has NOT executed on GitHub. The repository has no remote. No passing badge or "CI passes" claim is made in the README until a real run exists; the run link and test counts get recorded here when it does.
