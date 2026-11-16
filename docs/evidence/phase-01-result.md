@@ -169,3 +169,39 @@ What remains unknown, and is not concluded here:
 Unit tests need no network: no test currently opens a socket, and the live-chain test required by Task 5 does not exist yet (Task 5 was not started).
 
 Status: the workflow file parses as YAML (`js-yaml` 4.1.1) and every command in the `verify` job has been run locally with the same result recorded below, but the workflow has NOT executed on GitHub. The repository has no remote. No passing badge or "CI passes" claim is made in the README until a real run exists; the run link and test counts get recorded here when it does.
+
+## Task 8: local check results
+
+Commands, run from the repository root on 2026-11-16:
+
+```bash
+pnpm verify-env
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+Output of `pnpm verify-env`:
+
+```
+tool            pinned        actual
+--------------  ------------  ------------
+node            26.13.0       26.13.0
+pnpm            12.21.0       12.21.0
+typescript      5.9.3         5.9.3
+@biomejs/biome  2.6.8         2.6.8
+vitest          5.1.0         5.1.0
+
+Toolchain matches the pinned versions.
+```
+
+`pnpm format:check` and `pnpm lint` both reported `Checked 9 files` with no fixes and exited 0. `pnpm typecheck` and `pnpm build` completed without diagnostics. `pnpm test` reported:
+
+```
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+```
+
+The single test is the `chain-client` smoke test. It is the only test that exists, because the verification spike (Task 4) and the verifier module (Task 5) did not run; the counts above must not be read as coverage of the verifier.

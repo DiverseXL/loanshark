@@ -2,7 +2,7 @@
 
 Private financing on QoreChain: encrypted requests, separately encrypted lender offers, a verifiable agreement commitment, and real test-token settlement.
 
-> Status: Phase 0 (protocol reconnaissance). This repository currently contains the architecture, threat model, decision records, source lock and evidence from the reconnaissance. No product code exists yet. Every claim below is either backed by a link into `docs/` or marked as not yet built.
+> Status: Phase 1 (workspace and verification groundwork). This repository contains the architecture, threat model, decision records and source lock from Phase 0, plus a pnpm workspace, one package skeleton and a CI definition. No product code exists yet, and no QoreX signature has been verified. Every claim below is either backed by a link into `docs/` or marked as not yet built.
 
 Built for the QoreChain hackathon, Encrypted Apps category. Target network: QoreChain Diana Testnet (`qorechain-diana`). Testnet only; not a regulated lending service.
 
@@ -26,7 +26,7 @@ No zero-knowledge proofs, FHE or confidential computation are used or claimed.
 
 | Milestone | Scope | Status |
 |---|---|---|
-| M0 | Protocol reconnaissance, ADRs, source lock | In progress. See `docs/evidence/phase-00-result.md` |
+| M0 | Protocol reconnaissance, ADRs, source lock | In progress. Evidence in `docs/evidence/phase-00-result.md` and `docs/evidence/phase-01-result.md`. M0-3 is BLOCKED on a QoreX signature fixture |
 | M1 | Cryptographic vertical slice | Not started. On-chain KEM key registration is BLOCKED (ADR-0004) |
 | M2 | Private request and offer workflow | Not started |
 | M3 | Agreement commitment | Not started |
@@ -51,7 +51,7 @@ See `docs/ARCHITECTURE.md` (component diagram, trust boundaries, the two signing
 
 ## Known limitations
 
-1. **Nothing is built yet.** This is a Phase 0 repository.
+1. **No product code yet.** Phase 1 added the workspace, a `chain-client` skeleton and CI. No verification module, contract, app or API exists.
 2. **KEM key registration is blocked.** QoreX refuses `MsgRegisterKEMKey` from web apps, so the registered-recipient-key flow has no confirmed path. ADR-0004.
 3. **QoreSeal envelopes are not signed.** Sender authentication is added by this project and needs review. ADR-0003.
 4. **QoreSeal is 0.1.0 and pending external review** (its own documentation).
@@ -59,6 +59,8 @@ See `docs/ARCHITECTURE.md` (component diagram, trust boundaries, the two signing
 6. **Hackathon rules, deadline and licence requirement are unverified.** ADR-0001 is provisional.
 7. **QoreX handles one signing request at a time.** The UI must queue requests.
 8. **The QoreX dApp refusal list was read from the wallet-adapter source, not tested against QoreX.**
+9. **QoreX hybrid signatures are not verified yet (M0-3).** The official verifier is identified and pinned, but the raw `signArbitrary` response has not been supplied, so no positive or negative control has run. Nothing relies on an unverified signature.
+10. **CI has not run on GitHub.** The workflow exists and its commands pass locally; no remote is configured and no run link exists.
 
 ## Repository structure
 
@@ -70,6 +72,12 @@ docs/
   adr/                   decision records
   research/source-lock.md  every external claim, its source, and how it was confirmed
   evidence/              dated, unedited results of each phase
+packages/
+  chain-client/          QoreChain reads and hybrid message verification
+fixtures/                raw chain responses; signature fixtures when supplied
+scripts/verify-env.mjs   toolchain version check
+.github/workflows/ci.yml install, checks and secret scan
+CHANGELOG.md             changes by phase
 CLAUDE.md                operating contract for AI coding agents
 LICENSE                  Apache-2.0 (provisional, ADR-0001)
 ```
