@@ -1,0 +1,12 @@
+{
+  "file": "onchain-account-qor1385.json",
+  "note": "The .json file is the raw HTTP response body, byte for byte. Nothing in it was edited, reformatted or retyped. This sidecar exists so the date is recorded without altering the response.",
+  "url": "https://api-testnet.qore.host/qorechain/pqc/v1/account/qor1385wkhky3qkjwq47t8904xrd6s82lmkfjnxxsr",
+  "method": "GET",
+  "fetched_at_utc": "2026-11-16T12:33:30Z",
+  "http_status": 200,
+  "content_type": "application/json",
+  "cosmos_block_height": "10194644",
+  "sha256": "3976669d8b5d57b4279780c448b1d8e8feb247d193c9863f1c320572ddf05de5",
+  "contains_key_material": "Public keys only: an ML-DSA-87 public key and a secp256k1 public key, both published on chain. No private key, seed phrase or recovery code."
+}
