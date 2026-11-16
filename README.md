@@ -55,7 +55,7 @@ See `docs/ARCHITECTURE.md` (component diagram, trust boundaries, the two signing
 2. **KEM key registration is blocked.** QoreX refuses `MsgRegisterKEMKey` from web apps, so the registered-recipient-key flow has no confirmed path. ADR-0004.
 3. **QoreSeal envelopes are not signed.** Sender authentication is added by this project and needs review. ADR-0003.
 4. **QoreSeal is 0.1.0 and pending external review** (its own documentation).
-5. **No confirmed stablecoin on Diana.** The plan is a self-deployed, labelled test ERC-20. Three unidentified `erc20:` balances exist on the test account and have not been investigated.
+5. **No confirmed stablecoin on Diana.** The plan is a self-deployed, labelled test ERC-20. The three `erc20:` balances on the test account are contracts reporting `Fest ETH` (`fETH`, 18 decimals), `Fest BTC` (`fBTC`, 8) and `Fest USD` (`fUSD`, 6); their deployer, issuer and backing are unknown, so none is treated as a stablecoin.
 6. **Hackathon rules, deadline and licence requirement are unverified.** ADR-0001 is provisional.
 7. **QoreX handles one signing request at a time.** The UI must queue requests.
 8. **The QoreX dApp refusal list was read from the wallet-adapter source, not tested against QoreX.**
