@@ -1,0 +1,5 @@
+# Fixtures are raw chain and wallet responses. Their bytes are the evidence, so
+# they are stored byte for byte and never converted on checkout. Without this,
+# core.autocrlf=true rewrites the fixtures as CRLF and the SHA-256 recorded in
+# each .meta.json no longer describes the checked-out file.
+fixtures/** -text

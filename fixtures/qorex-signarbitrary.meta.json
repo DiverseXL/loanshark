@@ -1,0 +1,24 @@
+{
+  "file": "qorex-signarbitrary.json",
+  "what_it_is": "The raw object QoreX returned from native.signArbitrary for the LOANSHARK test message. Not edited, not regenerated, not retyped from a summary: the base64 values are copied verbatim from what was supplied.",
+  "chain_id": "qorechain-diana",
+  "signer": "qor1385wkhky3qkjwq47t8904xrd6s82lmkfjnxxsr",
+  "message": "LOANSHARK test message, no funds",
+  "signature_type": "ml-dsa-87-hybrid",
+  "recorded_at_utc": "2026-11-16",
+  "sha256": "63fd4db15bc582876414baa00a5dfd2b54c87d400518039a6b57f6f3a962fc94",
+  "sha256_of": "The stored bytes of qorex-signarbitrary.json, exactly as committed.",
+  "sha256_of_parsed_and_reserialised_json": "11bdf664c19819ef1f8e1242982d782af88e54fd2c60603b59c05f1f10af489b",
+  "sha256_of_parsed_note": "SHA-256 over JSON.stringify(JSON.parse(file)). Recorded so a reader can confirm the content independently of whitespace and line endings.",
+  "provenance": "Supplied through the chat session on 2026-11-16, not captured by a tool. There is therefore no HTTP status, Content-Type, block height or response byte count to record, and no transaction hash exists: signArbitrary signs but does not broadcast.",
+  "formatting_note": "The stored file uses LF line endings and a trailing newline. The chat paste carried CRLF. Line endings are the only difference; every character of every base64 value is unchanged, which the parsed-content hash above lets another party check. .gitattributes marks fixtures/** as -text so a checkout on any platform keeps these bytes, and sha256 above stays reproducible.",
+  "integrity_checks_run": [
+    "Parses as JSON (JSON.parse).",
+    "classical.publicKey and classical.signature and pq.signature are canonical base64 (regex, length divisible by 4, re-encode equals input).",
+    "classical.publicKey decodes to 33 bytes and classical.signature to 64 bytes.",
+    "pq.signature decodes to 4627 bytes, the ML-DSA-87 signature size.",
+    "classical.publicKey equals the on-chain ecdsa_pubkey of qor1385wkhky3qkjwq47t8904xrd6s82lmkfjnxxsr in fixtures/onchain-account-qor1385.json, so the response belongs to that account.",
+    "pq.signature does not contain the on-chain 2592-byte ML-DSA public key, which is consistent with source-lock claim 7: the pq object carries no public key."
+  ],
+  "contains_key_material": "Public keys and signatures only. The classical public key is already published on chain. No private key, seed phrase or recovery code is present."
+}
