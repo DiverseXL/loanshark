@@ -10,7 +10,7 @@ Last updated: Phase 1, 2026-11-16.
 |---|---|---|---|---|---|
 | M0-1 | QoreX exposes message signing that returns a hybrid signature | none (probe) | manual console probe | `evidence/phase-00-result.md` | DONE |
 | M0-2 | The account's ML-DSA key is registered on-chain | none (QoreX first transaction) | REST query | `evidence/phase-00-result.md` | DONE |
-| M0-3 | A QoreX hybrid signature verifies against the on-chain key | `packages/chain-client` | verification spike | `evidence/phase-01-result.md` | BLOCKED (verifier ready; QoreX signature fixture not supplied) |
+| M0-3 | A QoreX hybrid signature verifies against the on-chain key | `packages/chain-client/src/verify-hybrid-message.ts` | `packages/chain-client/test/verify-hybrid-message.test.ts` (12 tests, mock client) and a live test gated on `LIVE_CHAIN=1` | `evidence/phase-01-result.md` | DONE (verified against the on-chain key on `qorechain-diana`; four tampering controls refused) |
 | M0-4 | Diana EVM chain ID, RPC, explorer, faucet confirmed | none | `eth_chainId` call | `evidence/phase-01-result.md` | IN PROGRESS (chain ID 9800 and RPC confirmed; explorer and faucet not checked) |
 | M0-5 | Hackathon rules, deadline, licence confirmed | none | n/a | pending | BLOCKED (link needed) |
 | M0-6 | Path to register an ML-KEM key for a web-app user | unknown | n/a | `adr/0004` | BLOCKED |

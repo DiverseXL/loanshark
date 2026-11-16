@@ -2,7 +2,7 @@
 
 Private financing on QoreChain: encrypted requests, separately encrypted lender offers, a verifiable agreement commitment, and real test-token settlement.
 
-> Status: Phase 1 (workspace and verification groundwork). This repository contains the architecture, threat model, decision records and source lock from Phase 0, plus a pnpm workspace, one package skeleton and a CI definition. No product code exists yet, and no QoreX signature has been verified. Every claim below is either backed by a link into `docs/` or marked as not yet built.
+> Status: Phase 1 (workspace and verification groundwork). This repository contains the architecture, threat model, decision records and source lock from Phase 0, plus a pnpm workspace, one package with a working hybrid signature verifier and a CI definition. One real QoreX signature has been verified against the account's on-chain key. There is still no product workflow, contract, app or API. Every claim below is either backed by a link into `docs/` or marked as not yet built.
 
 Built for the QoreChain hackathon, Encrypted Apps category. Target network: QoreChain Diana Testnet (`qorechain-diana`). Testnet only; not a regulated lending service.
 
@@ -26,7 +26,7 @@ No zero-knowledge proofs, FHE or confidential computation are used or claimed.
 
 | Milestone | Scope | Status |
 |---|---|---|
-| M0 | Protocol reconnaissance, ADRs, source lock | In progress. Evidence in `docs/evidence/phase-00-result.md` and `docs/evidence/phase-01-result.md`. M0-3 is BLOCKED on a QoreX signature fixture |
+| M0 | Protocol reconnaissance, ADRs, source lock | In progress. Evidence in `docs/evidence/phase-00-result.md` and `docs/evidence/phase-01-result.md`. M0-3 is DONE; M0-4, M0-5 and M0-6 are still open |
 | M1 | Cryptographic vertical slice | Not started. On-chain KEM key registration is BLOCKED (ADR-0004) |
 | M2 | Private request and offer workflow | Not started |
 | M3 | Agreement commitment | Not started |
@@ -41,6 +41,7 @@ The full requirement-to-test-to-evidence mapping is in `docs/ACCEPTANCE_MATRIX.m
 
 - QoreX announces itself over EIP-6963 as `network.qore.qorex`. Its `native` interface exposes `signArbitrary`, and a live call returned an `ml-dsa-87-hybrid` signature with a classical part and a post-quantum part.
 - The account's ML-DSA key is registered on-chain after a first QoreX transaction (`/qorechain/pqc/v1/account/{address}`, `possession_proven: true`).
+- A real `signArbitrary` response for `qorechain-diana` verifies with `@qorechain/qoresign` 0.2.0 against that on-chain ML-DSA-87 key, with the post-quantum part required. Changing the message, the chain ID, the signer or the PQ part is refused. `packages/chain-client/src/verify-hybrid-message.ts`.
 - The account has no ML-KEM key registered. A web app cannot register one through QoreX (ADR-0004).
 
 Sources, commits read, and what was confirmed at runtime versus read in source are in `docs/research/source-lock.md`.
@@ -59,7 +60,7 @@ See `docs/ARCHITECTURE.md` (component diagram, trust boundaries, the two signing
 6. **Hackathon rules, deadline and licence requirement are unverified.** ADR-0001 is provisional.
 7. **QoreX handles one signing request at a time.** The UI must queue requests.
 8. **The QoreX dApp refusal list was read from the wallet-adapter source, not tested against QoreX.**
-9. **QoreX hybrid signatures are not verified yet (M0-3).** The official verifier is identified and pinned, but the raw `signArbitrary` response has not been supplied, so no positive or negative control has run. Nothing relies on an unverified signature.
+9. **Only message signatures are verified.** `verifyHybridMessage` covers `signArbitrary` messages, not transactions. The envelope authentication of ADR-0003 is not built, and the recorded fixture's message text is the string reported as signed, not an independently captured one.
 10. **CI has not run on GitHub.** The workflow exists and its commands pass locally; no remote is configured and no run link exists.
 
 ## Repository structure
@@ -74,7 +75,7 @@ docs/
   evidence/              dated, unedited results of each phase
 packages/
   chain-client/          QoreChain reads and hybrid message verification
-fixtures/                raw chain responses; signature fixtures when supplied
+fixtures/                raw chain responses and the QoreX hybrid signature fixture
 scripts/verify-env.mjs   toolchain version check
 .github/workflows/ci.yml install, checks and secret scan
 CHANGELOG.md             changes by phase

@@ -366,6 +366,121 @@ ASSUMPTION (message text): `"LOANSHARK test message, no funds"` is the string th
 
 A QoreX hybrid signature verifies against the on-chain key with the post-quantum part required, on `qorechain-diana`, for the recorded message and signer, and four tampering controls are refused. This is a spike, not a tested module; Task 5 turns it into one.
 
+## Task 5: verifier module
+
+Files:
+
+- `packages/chain-client/src/verify-hybrid-message.ts`: exports `verifyHybridMessage` plus its types.
+- `packages/chain-client/test/verify-hybrid-message.test.ts`: unit tests, REST client mocked.
+- `packages/chain-client/test/verify-hybrid-message.live.test.ts`: one live test, skipped unless `LIVE_CHAIN=1`.
+
+What the module enforces, and how it differs from the spike:
+
+- `requirePq: true` is set inside the module. There is no parameter to relax it, so a response with no `pq` part has no path to acceptance.
+- The signature object handed to the verifier is rebuilt from `classical.keyType`, `classical.publicKey`, `classical.signature`, `pq.algorithmId` and `pq.signature` only. The top-level `pub_key` and `signature` fields and any key inside `pq` are dropped by construction rather than by trusting the verifier to ignore them. `response` is typed `unknown` and validated field by field.
+- The ML-DSA-87 public key comes from `accountClient.readAccount(signer)`, an injected port, never from the response. The returned record must be for that same address, must be algorithm id 1, and its key must be 2592 bytes.
+- It returns a discriminated result instead of throwing. Failure reasons are a closed union: `account-unavailable`, `account-address-mismatch`, `on-chain-key-invalid`, `malformed-response`, `pq-part-missing`, `pq-algorithm-unsupported`, `pq-key-not-registered`, `signer-mismatch`, `classical-signature-invalid`, `pq-signature-invalid`, `verification-error`. When the verifier refused, the stable `QoreSignError.code` is included as `verifierCode`.
+
+### Unit tests
+
+Command:
+
+```bash
+pnpm test
+```
+
+Output, unedited:
+
+```
+$ vitest run
+
+ RUN  v5.1.0 C:/Users/user/Documents/loanshark
+
+ ✓ packages/chain-client/test/smoke.test.ts (1 test) 10ms
+ ↓ packages/chain-client/test/verify-hybrid-message.live.test.ts (1 test | 1 skipped)
+ ✓ packages/chain-client/test/verify-hybrid-message.test.ts (12 tests) 258ms
+
+ Test Files  2 passed | 1 skipped (3)
+      Tests  13 passed | 1 skipped (14)
+   Start at  19:58:33
+   Duration  2.15s (import 68%, tests 14%, worker 10%, transform 7%)
+```
+
+Measured counts: 13 tests passed, 1 skipped, 14 collected across 3 files. The skipped one is the live test. The module's own file holds 12 of the passing tests: the Task 4 positive case, each of the four controls, and seven failure-path tests (no PQ part, malformed response, no on-chain key, wrong key length, client throwing, address mismatch, `Uint8Array` message, ignored response fields). The only network-free client in that file is a mock; it returns the saved account record and is commented as a mock.
+
+The first run of this suite had one failure, in "refuses a different signer address": the mock returned `null` for the substituted address, so the module correctly refused earlier with `account-unavailable` (`account-unavailable` was the actual reason, the expectation said `signer-mismatch`). The test was wrong, not the module. It now registers a record for the substituted address so the classical-key check is reached, and a separate test covers the no-key case. No assertion was weakened.
+
+### Live test
+
+Command, run once to confirm the live path works:
+
+```bash
+LIVE_CHAIN=1 pnpm test -- verify-hybrid-message.live
+```
+
+Output, unedited:
+
+```
+$ vitest run -- verify-hybrid-message.live
+
+ RUN  v5.1.0 C:/Users/user/Documents/loanshark
+
+ ✓ packages/chain-client/test/smoke.test.ts (1 test) 11ms
+ ✓ packages/chain-client/test/verify-hybrid-message.test.ts (12 tests) 272ms
+ ✓ packages/chain-client/test/verify-hybrid-message.live.test.ts (1 test) 1215ms
+   ✓ verifyHybridMessage against the live Diana testnet (1)
+     ✓ verifies the saved QoreX response against the key registered on chain now 1212ms
+
+ Test Files  3 passed (3)
+      Tests  14 passed (14)
+   Start at  19:58:57
+   Duration  2.70s (tests 60%, import 34%, worker 4%, transform 3%)
+```
+
+The live test made one read-only `GET` to `https://api-testnet.qore.host/qorechain/pqc/v1/account/qor1385wkhky3qkjwq47t8904xrd6s82lmkfjnxxsr` and verified the saved response against the key registered at that moment. Nothing was signed or broadcast.
+
+### Superseded statements above
+
+Two statements earlier in this file describe the state before Task 5 and are now out of date, kept as the record of what was true then:
+
+- Task 7 says the live-chain test does not exist. It now does, and the CI job runs `pnpm test` without `LIVE_CHAIN`, so it is skipped and still needs no network.
+- Task 8's test counts (1 test) are the pre-Task-5 numbers. The measured count after Task 5 is 13 passed and 1 skipped, quoted above.
+
+### Checks run for this task
+
+```bash
+pnpm typecheck
+pnpm format:check
+pnpm lint
+pnpm test
+```
+
+`pnpm typecheck` exited 0 with no diagnostics. `pnpm format:check` exited 0, "Checked 13 files in 31ms. No fixes applied." `pnpm lint` exited 0, "Checked 13 files in 50ms. No fixes applied. Found 15 infos."; the infos are suggestions, not failures. `pnpm test` is the run quoted above.
+
+### Clean checkout reproduction
+
+A fresh clone of this repository was installed and run end to end, to check that the spike is reproducible and that the fixture hash survives a checkout with `core.autocrlf=true`:
+
+```powershell
+git clone . C:\tmp\ls-clean
+Set-Location C:\tmp\ls-clean
+pnpm install --frozen-lockfile
+pnpm verify-env
+certutil -hashfile fixtures\qorex-signarbitrary.json SHA256
+pnpm -C packages/chain-client build
+node packages/chain-client/dist/spike/verify-qorex-signature.js
+exit $LASTEXITCODE
+pnpm test
+```
+
+Observed: `pnpm install --frozen-lockfile` exited 0 in 4.1s; `pnpm verify-env` reported the toolchain matches; `certutil` printed `63fd4db15bc582876414baa00a5dfd2b54c87d400518039a6b57f6f3a962fc94`, matching the sidecar; the spike exited 0 with the same output as above; `pnpm test` reported `Tests 13 passed | 1 skipped (14)`.
+
+ASSUMPTION: the clone source was this working copy, because the repository has no remote. `git clone <remote> loanshark` is the same command once a remote exists. `Get-FileHash` was not available in the PowerShell on this machine (5.1.26100.9818 reported `CommandNotFoundException`), so `certutil -hashfile` is used above.
+
+### Status of M0-3
+
+DONE. A QoreX hybrid signature verifies against the on-chain key with the post-quantum part required, four tampering controls are refused, and both the spike and a tested module reproduce it. The acceptance matrix points at that module, its test file and this evidence file.
+
 ## Task 7: CI
 
 `.github/workflows/ci.yml` runs on `push` to `main` and on every `pull_request`:
