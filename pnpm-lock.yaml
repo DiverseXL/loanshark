@@ -194,6 +194,18 @@ importers:
         specifier: 0.2.0
         version: 0.2.0
 
+  packages/qoreseal-adapter:
+    dependencies:
+      '@loanshark/chain-client':
+        specifier: workspace:*
+        version: link:../chain-client
+      '@qorechain/qoreseal':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@qorechain/qoresign':
+        specifier: 0.2.0
+        version: 0.2.0
+
 packages:
 
   '@biomejs/biome@2.6.8':
@@ -313,6 +325,14 @@ packages:
   '@qorechain/pqc@0.2.3':
     resolution: {integrity: sha512-YLzcfwkeq9mCyTcFf/BQFB7dsNIkyFcUluByp1zrJ7SRAkPj8cwPmv7jtw5Xeh7K80FgwzlvtBeZb/dzzknWZA==}
     engines: {node: '>=18'}
+
+  '@qorechain/qoreseal@0.1.0':
+    resolution: {integrity: sha512-OBUwTVsibzTH/zOpqT6lkq7mH/dCg9zV4hSw3tEMUttt3Jb4BqF4BF6/DsZqzSY1+joPusm3gRutx17kV+Hb5w==}
+    engines: {node: '>=20'}
+
+  '@qorechain/qoresign@0.1.0':
+    resolution: {integrity: sha512-PF4x20G3l1+Qym762WOuoGv/0jN+BMeqIPWwZIGlxF0OMulOIVX2s7yzBaTjrAJUilqUwJKUNtDvLnPEPJFD8g==}
+    engines: {node: '>=20'}
 
   '@qorechain/qoresign@0.2.0':
     resolution: {integrity: sha512-bOhFn/Xb5SQbDrOccYa0sKsh7Ds07qyeUd3JrqjqqRyx8sUOgu8HeOYV2tWR+7hVeHKhWaTY6oGEnEax+JeVcQ==}
@@ -814,6 +834,26 @@ snapshots:
     dependencies:
       '@noble/hashes': 2.4.0
       '@noble/post-quantum': 0.7.1
+
+  '@qorechain/qoreseal@0.1.0':
+    dependencies:
+      '@noble/ciphers': 2.4.0
+      '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
+      '@noble/post-quantum': 0.7.1
+      '@qorechain/pqc': 0.2.3
+      '@qorechain/qoresign': 0.1.0
+      '@scure/base': 2.4.0
+      '@scure/bip39': 2.4.0
+
+  '@qorechain/qoresign@0.1.0':
+    dependencies:
+      '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
+      '@qorechain/pqc': 0.2.3
+      '@scure/base': 2.4.0
+      '@scure/bip32': 2.4.0
+      '@scure/bip39': 2.4.0
 
   '@qorechain/qoresign@0.2.0':
     dependencies:

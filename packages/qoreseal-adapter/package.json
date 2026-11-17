@@ -1,0 +1,30 @@
+{
+  "name": "@loanshark/qoreseal-adapter",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Typed, offline-only wrapper around @qorechain/qoreseal for LOANSHARK envelopes.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@loanshark/chain-client": "workspace:*",
+    "@qorechain/qoreseal": "0.1.0",
+    "@qorechain/qoresign": "0.2.0"
+  },
+  "devDependencies": {}
+}
