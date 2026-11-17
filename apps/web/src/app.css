@@ -149,6 +149,35 @@ pre {
   word-break: break-all;
 }
 
+.notice {
+  border-left: 4px solid #7a5b00;
+  padding: 8px 12px;
+  background: rgba(122, 91, 0, 0.08);
+}
+
+.bad-notice {
+  border-left-color: #a01b1b;
+  background: rgba(160, 27, 27, 0.08);
+}
+
+.sign-summary {
+  border: 1px solid #8a8a8a;
+  border-radius: 5px;
+  padding: 8px 12px;
+  margin: 8px 0 12px;
+}
+
+.raw {
+  margin-top: 12px;
+  border-top: 1px dashed #9a9a9a;
+  padding-top: 8px;
+}
+
+.raw summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
 footer {
   margin-top: 28px;
   border-top: 1px solid #8a8a8a;
