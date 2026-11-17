@@ -1,0 +1,26 @@
+{
+  "name": "@loanshark/agreement",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Loan terms, on-chain commitment and offline agreement confirmation for LOANSHARK.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@loanshark/chain-client": "workspace:*",
+    "@loanshark/qoreseal-adapter": "workspace:*",
+    "viem": "2.57.11"
+  },
+  "devDependencies": {}
+}

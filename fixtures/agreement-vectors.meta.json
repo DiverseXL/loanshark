@@ -1,0 +1,7 @@
+{
+  "generatedAt": "2026-11-17",
+  "generator": "one-off Node script against packages/agreement/dist, built from this commit with the pinned viem 2.57.11",
+  "sha256": "e0c33bbf65b0e19659721fce68ff035c64f432fcefaaf3fb7f6ffd57e3c1e777",
+  "vectorCount": 5,
+  "note": "Generated once, then locked. Tests recompute each vector; they never regenerate the file. Do not regenerate it to make a test pass."
+}
