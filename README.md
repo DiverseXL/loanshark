@@ -2,7 +2,7 @@
 
 Private financing on QoreChain: encrypted requests, separately encrypted lender offers, a verifiable agreement commitment, and real test-token settlement.
 
-> Status: Phase 2 (M1 offline cryptographic slice). This repository contains the architecture, threat model, decision records and source lock from Phase 0, a hybrid signature verifier in `packages/chain-client`, and an offline QoreSeal adapter in `packages/qoreseal-adapter` with context-bound, signed envelopes and 55 offline tests. One real QoreX signature has been verified against the account's on-chain key. The on-chain ML-KEM registration path is BLOCKED, so the adapter uses explicit mlkem mode only. There is still no product workflow, contract, app or API. Every claim below is either backed by a link into `docs/` or marked as not yet built.
+> Status: Phase 3 (M3 and M4, local only). This repository contains the architecture, threat model, decision records and source lock from Phase 0, a hybrid signature verifier in `packages/chain-client`, an offline QoreSeal adapter in `packages/qoreseal-adapter`, an agreement package in `packages/agreement`, and a local Hardhat settlement package in `packages/contracts`. The on-chain ML-KEM registration path is BLOCKED, so the adapter uses explicit mlkem mode only. No contract has been deployed and there is no product app or API. Every claim below is either backed by a link into `docs/` or marked as not yet built.
 
 Built for the QoreChain hackathon, Encrypted Apps category. Target network: QoreChain Diana Testnet (`qorechain-diana`). Testnet only; not a regulated lending service.
 
@@ -29,8 +29,8 @@ No zero-knowledge proofs, FHE or confidential computation are used or claimed.
 | M0 | Protocol reconnaissance, ADRs, source lock | In progress. Evidence in `docs/evidence/phase-00-result.md` and `docs/evidence/phase-01-result.md`. M0-3 is DONE; M0-4, M0-5 and M0-6 are still open |
 | M1 | Cryptographic vertical slice | Offline slice built and tested: `packages/qoreseal-adapter` (seal/open in explicit mlkem mode, canonical AAD, signed envelopes), with the official QoreSeal 0.1.0 vectors passing. On-chain KEM key registration and hybrid mode remain BLOCKED (ADR-0004). Evidence in `docs/evidence/phase-02-result.md` |
 | M2 | Private request and offer workflow | Not started |
-| M3 | Agreement commitment | Not started |
-| M4 | Test token and settlement contracts | Not started |
+| M3 | Agreement commitment | Local: terms, `keccak256(abi.encode(terms))` commitment, canonical agreement text and signed confirmation. 15 tests. Evidence in `docs/evidence/phase-03-result.md` |
+| M4 | Test token and settlement contracts | Local: `TestUSD` and `LoanSettlement` on the in-process Hardhat network, with 23 tests including adversarial mock tokens and a seeded 200-run invariant test. Not deployed. Evidence in `docs/evidence/phase-03-result.md` |
 | M5 | Hybrid authorisation and wallet flow | Not started |
 | M6 | Integrated UI | Not started |
 | M7 | Hardening and evidence pack | Not started |
@@ -54,7 +54,7 @@ See `docs/ARCHITECTURE.md` (component diagram, trust boundaries, the two signing
 
 ## Known limitations
 
-1. **No product code yet.** Phase 2 added the offline adapter and its tests. No contract, app or API exists.
+1. **No product app or API yet.** Phase 3 added an agreement package and local contracts. No contract is deployed, and there is no app or API.
 2. **KEM key registration is blocked.** QoreX refuses `MsgRegisterKEMKey` from web apps, so the registered-recipient-key flow has no confirmed path and the adapter exposes mlkem mode only. ADR-0004.
 3. **QoreSeal envelopes are not signed.** This project adds a signed envelope, but its signer is a TEST-ONLY QoreSign key in this phase; the real QoreX `signArbitrary` signer is deferred to the browser step. ADR-0003.
 4. **QoreSeal is 0.1.0 and pending external review** (its own documentation). The npm release is pinned exactly and its vectors pass; it has not been audited here.
@@ -65,7 +65,10 @@ See `docs/ARCHITECTURE.md` (component diagram, trust boundaries, the two signing
 9. **Only message signatures are verified.** `verifyHybridMessage` covers `signArbitrary` messages, not transactions. Envelope authentication is built offline, but every envelope test signs with a throwaway QoreSign key and a MOCK account client; the recorded real QoreX fixture's message text is the string reported as signed, not an independently captured one.
 10. **CI has not run on GitHub.** The workflow exists and its commands pass locally; no remote is configured and no run link exists.
 11. **The offline tests prove behaviour, not chain registration.** They use generated throwaway keys, a mocked account client and a mocked KEM registry. No test in this phase registered a key, opened an EVM window or contacted the KEM endpoint.
-12. **AAD and signed-message formats are project assumptions.** The length-prefixed encoding (ADR-0007) and the SHA-256 domain-tagged message (ADR-0003) are not QoreChain standards.
+12. **AAD and signed-message formats are project assumptions.** The length-prefixed encoding (ADR-0007), the SHA-256 domain-tagged message (ADR-0003) and the agreement text/confirmation formats (ADR-0010) are not QoreChain standards.
+13. **The contracts are local only and unaudited.** They run on the in-process Hardhat network and have never been deployed to Diana or any other chain. No gas, security or economic review has been done beyond the tests listed in `docs/evidence/phase-03-result.md`.
+14. **The qor1-to-0x identity link is unconfirmed.** The derived address is `0xd0a1453c7b8157aa0635076c33b3e24a50a923c5`, but the owner has not compared it with the address QoreX reports on its EVM provider. ADR-0009 records the check and the fallback.
+15. **The only production-intended token is the project's own test token.** `TestUSD` is labelled testnet demo money and has no value. The Fest tokens on the account are not used. Contract tests additionally deploy clearly named `Mock...` tokens; those are test only.
 
 ## Repository structure
 
@@ -80,6 +83,8 @@ docs/
 packages/
   chain-client/          QoreChain reads and hybrid message verification
   qoreseal-adapter/      offline QoreSeal wrapper, canonical AAD and signed envelopes
+  agreement/             terms, commitment, canonical text and confirmation message
+  contracts/             TestUSD and LoanSettlement (local Hardhat only)
 fixtures/                raw chain responses and the QoreX hybrid signature fixture
 scripts/verify-env.mjs   toolchain version check
 .github/workflows/ci.yml install, checks and secret scan

@@ -4,6 +4,28 @@ No release has been made. The project is built one phase at a time and each entr
 
 ## Unreleased
 
+### Phase 3: agreement commitment and local settlement contracts
+
+Added:
+
+- `packages/agreement`: the ten-field `Terms` type, `commitmentOf` using viem 2.57.11 `abi.encode` and keccak, a canonical versioned agreement text with its SHA-256, and the offline confirmation message signed and verified through the existing hybrid verifier. No QoreX signer is built.
+- Five frozen agreement vectors in `fixtures/agreement-vectors.json`, produced once and recomputed by both the TypeScript and Solidity tests.
+- `packages/contracts`: Hardhat 3.22.0 with pinned viem, node-test-runner and network-helpers plugins, OpenZeppelin 5.6.1, Solidity 0.8.34 and optimizer 200. No HTTP network is configured.
+- `TestUSD` (LOANSHARK Test USD, tUSD, 6 decimals, owner-only mint) and `LoanSettlement` with the ADR-0008 states, immutable token allowlist, pull payments, custom errors, SafeERC20, ReentrancyGuard and exact balance-delta checks on every transfer.
+- 23 contract tests: full lifecycle and exact balances, wrong callers, ordering, 6 and 18 decimals, deadline boundaries, default, four adversarial mock tokens plus an unlisted token, a seeded 200-run invariant sequence, and the cross-implementation commitment comparison.
+- ADR-0008 (loan model), ADR-0009 (identity binding assumption), ADR-0010 (agreement hashing) and ADR-0011 (contract toolchain); Phase 3 evidence and raw gas statistics.
+
+Changed:
+
+- The root `pnpm test` now runs both Vitest and the Hardhat suite; Vitest excludes `packages/contracts`.
+- Acceptance matrix: C5, C6 and C7 DONE as local Hardhat results, not deployed; T9 to T11 have test references. README milestones M3 and M4, limitations, structure and source-lock claims 31 to 33.
+
+Known in this phase:
+
+- No contract is deployed. The identity link between the qor1 account and the derived 0x address is unconfirmed (ADR-0009).
+- The ADR-0008 decisions are still marked for owner confirmation.
+- CI has still not run on GitHub because no remote is configured.
+
 ### Phase 2: M1 offline cryptographic slice
 
 Added:

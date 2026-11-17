@@ -27,7 +27,9 @@ jobs:
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
-      # Unit tests use no network. Live-chain tests are skipped unless LIVE_CHAIN=1.
+      # No external chain is contacted. Vitest unit tests are offline; the
+      # Hardhat suite runs on an in-process EVM and downloads the pinned solc
+      # compiler. Live-chain tests are skipped unless LIVE_CHAIN=1.
       - run: pnpm test
 
   secrets:
