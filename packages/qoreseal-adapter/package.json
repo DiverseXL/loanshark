@@ -24,7 +24,8 @@
   "dependencies": {
     "@loanshark/chain-client": "workspace:*",
     "@qorechain/qoreseal": "0.1.0",
-    "@qorechain/qoresign": "0.2.0"
+    "@qorechain/qoresign": "0.2.0",
+    "@noble/hashes": "2.4.0"
   },
   "devDependencies": {}
 }

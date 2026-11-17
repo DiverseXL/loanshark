@@ -1,0 +1,125 @@
+{
+  "format": "loanshark-aad-vectors-v1",
+  "note": "Frozen AAD bytes. Generated once from the ADR-0007 encoding; any change to the encoding must break a test.",
+  "encoding": "eight fields in order (protocol label, chain id, kind, request id, offer id, borrower, lender, version), each a 4-byte unsigned big-endian length followed by UTF-8 bytes; absent offer id and lender are zero length",
+  "vectors": [
+    {
+      "name": "request-basic",
+      "context": {
+        "kind": "request",
+        "chainId": "qorechain-diana",
+        "requestId": "req-001",
+        "borrower": "qor1385wkhky3qkjwq47t8904xrd6s82lmkfjnxxsr",
+        "version": "1"
+      },
+      "aadHex": "0000000c6c6f616e736861726b2f76310000000f716f7265636861696e2d6469616e610000000772657175657374000000077265712d303031000000000000002a716f7231333835776b686b7933716b6a777134377438393034787264367338326c6d6b666a6e78787372000000000000000131"
+    },
+    {
+      "name": "request-other-request-id",
+      "context": {
+        "kind": "request",
+        "chainId": "qorechain-diana",
+        "requestId": "req-002",
+        "borrower": "qor1385wkhky3qkjwq47t8904xrd6s82lmkfjnxxsr",
+        "version": "1"
+      },
+      "aadHex": "0000000c6c6f616e736861726b2f76310000000f716f7265636861696e2d6469616e610000000772657175657374000000077265712d303032000000000000002a716f7231333835776b686b7933716b6a777134377438393034787264367338326c6d6b666a6e78787372000000000000000131"
+    },
+    {
+      "name": "request-other-borrower",
+      "context": {
+        "kind": "request",
+        "chainId": "qorechain-diana",
+        "requestId": "req-001",
+        "borrower": "qor1lender0000000000000000000000000000",
+        "version": "1"
+      },
+      "aadHex": "0000000c6c6f616e736861726b2f76310000000f716f7265636861696e2d6469616e610000000772657175657374000000077265712d3030310000000000000026716f72316c656e64657230303030303030303030303030303030303030303030303030303030000000000000000131"
+    },
+    {
+      "name": "request-other-chain",
+      "context": {
+        "kind": "request",
+        "chainId": "qorechain-vladi",
+        "requestId": "req-001",
+        "borrower": "qor1385wkhky3qkjwq47t8904xrd6s82lmkfjnxxsr",
+        "version": "1"
+      },
+      "aadHex": "0000000c6c6f616e736861726b2f76310000000f716f7265636861696e2d766c6164690000000772657175657374000000077265712d303031000000000000002a716f7231333835776b686b7933716b6a777134377438393034787264367338326c6d6b666a6e78787372000000000000000131"
+    },
+    {
+      "name": "request-other-version",
+      "context": {
+        "kind": "request",
+        "chainId": "qorechain-diana",
+        "requestId": "req-001",
+        "borrower": "qor1385wkhky3qkjwq47t8904xrd6s82lmkfjnxxsr",
+        "version": "2"
+      },
+      "aadHex": "0000000c6c6f616e736861726b2f76310000000f716f7265636861696e2d6469616e610000000772657175657374000000077265712d303031000000000000002a716f7231333835776b686b7933716b6a777134377438393034787264367338326c6d6b666a6e78787372000000000000000132"
+    },
+    {
+      "name": "offer-basic",
+      "context": {
+        "kind": "offer",
+        "chainId": "qorechain-diana",
+        "requestId": "req-001",
+        "offerId": "off-001",
+        "borrower": "qor1385wkhky3qkjwq47t8904xrd6s82lmkfjnxxsr",
+        "lender": "qor1lender0000000000000000000000000000",
+        "version": "1"
+      },
+      "aadHex": "0000000c6c6f616e736861726b2f76310000000f716f7265636861696e2d6469616e61000000056f66666572000000077265712d303031000000076f66662d3030310000002a716f7231333835776b686b7933716b6a777134377438393034787264367338326c6d6b666a6e7878737200000026716f72316c656e646572303030303030303030303030303030303030303030303030303030300000000131"
+    },
+    {
+      "name": "offer-other-offer-id",
+      "context": {
+        "kind": "offer",
+        "chainId": "qorechain-diana",
+        "requestId": "req-001",
+        "offerId": "off-002",
+        "borrower": "qor1385wkhky3qkjwq47t8904xrd6s82lmkfjnxxsr",
+        "lender": "qor1lender0000000000000000000000000000",
+        "version": "1"
+      },
+      "aadHex": "0000000c6c6f616e736861726b2f76310000000f716f7265636861696e2d6469616e61000000056f66666572000000077265712d303031000000076f66662d3030320000002a716f7231333835776b686b7933716b6a777134377438393034787264367338326c6d6b666a6e7878737200000026716f72316c656e646572303030303030303030303030303030303030303030303030303030300000000131"
+    },
+    {
+      "name": "offer-other-lender",
+      "context": {
+        "kind": "offer",
+        "chainId": "qorechain-diana",
+        "requestId": "req-001",
+        "offerId": "off-001",
+        "borrower": "qor1385wkhky3qkjwq47t8904xrd6s82lmkfjnxxsr",
+        "lender": "qor1lender1111111111111111111111111111",
+        "version": "1"
+      },
+      "aadHex": "0000000c6c6f616e736861726b2f76310000000f716f7265636861696e2d6469616e61000000056f66666572000000077265712d303031000000076f66662d3030310000002a716f7231333835776b686b7933716b6a777134377438393034787264367338326c6d6b666a6e7878737200000026716f72316c656e646572313131313131313131313131313131313131313131313131313131310000000131"
+    },
+    {
+      "name": "offer-other-borrower",
+      "context": {
+        "kind": "offer",
+        "chainId": "qorechain-diana",
+        "requestId": "req-001",
+        "offerId": "off-001",
+        "borrower": "qor1lender0000000000000000000000000000",
+        "lender": "qor1lender1111111111111111111111111111",
+        "version": "1"
+      },
+      "aadHex": "0000000c6c6f616e736861726b2f76310000000f716f7265636861696e2d6469616e61000000056f66666572000000077265712d303031000000076f66662d30303100000026716f72316c656e6465723030303030303030303030303030303030303030303030303030303000000026716f72316c656e646572313131313131313131313131313131313131313131313131313131310000000131"
+    },
+    {
+      "name": "request-and-offer-same-ids",
+      "context": {
+        "kind": "request",
+        "chainId": "qorechain-diana",
+        "requestId": "req-001",
+        "borrower": "qor1385wkhky3qkjwq47t8904xrd6s82lmkfjnxxsr",
+        "version": "1"
+      },
+      "aadHex": "0000000c6c6f616e736861726b2f76310000000f716f7265636861696e2d6469616e610000000772657175657374000000077265712d303031000000000000002a716f7231333835776b686b7933716b6a777134377438393034787264367338326c6d6b666a6e78787372000000000000000131"
+    }
+  ]
+}
