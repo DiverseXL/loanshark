@@ -1,0 +1,157 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.45;
+  font-size: 15px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 16px 20px 48px;
+}
+
+.testnet-banner {
+  background: #7a1f00;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  padding: 8px 12px;
+}
+
+h1 {
+  font-size: 1.35rem;
+  margin: 18px 0 4px;
+}
+
+h2 {
+  font-size: 1.05rem;
+  margin: 0 0 10px;
+}
+
+h3 {
+  font-size: 0.95rem;
+  margin: 14px 0 6px;
+}
+
+.panel {
+  border: 1px solid #8a8a8a;
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 16px 0;
+}
+
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.muted {
+  opacity: 0.75;
+}
+
+.badge {
+  display: inline-block;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.badge.good {
+  color: #1a6b2f;
+}
+
+.badge.bad {
+  color: #a01b1b;
+}
+
+.badge.pending {
+  color: #7a5b00;
+}
+
+button {
+  font: inherit;
+  padding: 6px 12px;
+  border-radius: 5px;
+  border: 1px solid #6b6b6b;
+  background: #f2f2f2;
+  color: #111111;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 8px 0;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+  font-size: 0.92rem;
+}
+
+th,
+td {
+  border: 1px solid #9a9a9a;
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+code,
+pre {
+  font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  font-size: 0.85rem;
+}
+
+pre {
+  border: 1px solid #9a9a9a;
+  border-radius: 5px;
+  padding: 10px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 420px;
+}
+
+.result-list {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.result-list li {
+  margin: 4px 0;
+}
+
+.address {
+  font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  word-break: break-all;
+}
+
+footer {
+  margin-top: 28px;
+  border-top: 1px solid #8a8a8a;
+  padding-top: 10px;
+  font-size: 0.85rem;
+}

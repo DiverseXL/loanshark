@@ -1,5 +1,6 @@
 packages:
   - "packages/*"
+  - "apps/*"
 minimumReleaseAgeExclude:
   - "@biomejs/biome@2.6.8"
   - "@biomejs/cli-android-arm64@2.6.8"
