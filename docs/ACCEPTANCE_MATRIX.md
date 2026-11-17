@@ -6,6 +6,8 @@ Status values: `PENDING`, `IN PROGRESS`, `DONE`, `BLOCKED`.
 
 Last updated: Step 6a (hackathon rules recorded and repository prepared for publication), 2026-11-17. Phase 4 rows below are unchanged.
 
+Submission requirements from the organiser's pages (public repository, licence, README, cover image, video, testnet address, kit credits, `AI_USAGE.md` and the Encrypted Apps requirements) are mapped in `docs/SUBMISSION.md`. Every row there is PENDING by design, because none can be closed before the repository is public and the project is entered. The rows below cover technical assertions.
+
 | ID | Assertion | Implementation | Test | Evidence | Status |
 |---|---|---|---|---|---|
 | M0-1 | QoreX exposes message signing that returns a hybrid signature | none (probe) | manual console probe | `evidence/phase-00-result.md` | DONE |

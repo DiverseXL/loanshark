@@ -68,7 +68,9 @@ const rows = selectors.map(({ signature, selector }) => {
 
 console.log(`viem ${viemVersion}; ${signatures.length} selectors; ${contracts.length} contracts`);
 console.log("");
-console.log(`| Function | Selector | ${contracts.map((c) => `${c.label} \`${c.address}\``).join(" | ")} |`);
+console.log(
+  `| Function | Selector | ${contracts.map((c) => `${c.label} \`${c.address}\``).join(" | ")} |`,
+);
 console.log(`|---|---|${contracts.map(() => "---").join("|")}|`);
 for (const row of rows) {
   console.log(`| \`${row.signature}\` | \`${row.selector}\` | ${row.cells.join(" | ")} |`);

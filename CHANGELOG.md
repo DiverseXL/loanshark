@@ -4,6 +4,27 @@ No release has been made. The project is built one phase at a time and each entr
 
 ## Unreleased
 
+### Step 6a: rules recorded, repository prepared for publication, submission documents
+
+Added:
+
+- Source-lock claims 45 to 56, fetched from `https://build.qorechain.io/rules`, `/start` and `/prizes` on 2026-11-17, with the differences from the earlier owner summary recorded in the mismatches section.
+- `docs/SUBMISSION.md`: every submission requirement mapped to its artefact, owner action or evidence, all PENDING, with the 2 December 2026 23:59 UTC deadline and the 1 December internal freeze.
+- `docs/adr/0013-settlement-token.md`: Options A (TestUSD and fUSD) and B (TestUSD only), Proposed, no contract change.
+- `scripts/token-selector-scan.mjs` and `docs/evidence/phase-05-token-scan.md`: fifteen selectors computed with viem 2.57.11 and searched in the saved runtime code of the three fest tokens. None was found. The limits of the heuristic are stated.
+- `AI_USAGE.md` and `docs/DEMO_SCRIPT.md`, with the storyboard marked real, mocked or blocked.
+- A README Credits section naming the two QoreChain kits and every external library with its licence.
+
+Changed:
+
+- ADR-0001 is Accepted, with the fetched licence rule as evidence. M0-5 is DONE; M0-4 and M0-7 are qualified; the README carries the deadline, the freeze and a limitation for the blocked registered-recipient-key requirement.
+- `LICENSE` is the canonical Apache-2.0 text. The previous copy had replaced the appendix placeholder with a copyright line naming the QoreChain Association, which is not the copyright holder.
+- Absolute repository paths in two evidence files were replaced with `<repo root>`, with a redaction note added. History was not rewritten.
+
+Known publication findings, not fixed:
+
+- All commits are authored by `DiverseXL <samuelakinjo59@gmail.com>`, and 30 carry a `Generated with Codebuff` footer with an emoji. Both become public on push; changing them needs a history rewrite, which the owner has not authorised.
+
 ### Phase 4: browser app foundation and QoreX read/sign-message layer
 
 Added:
