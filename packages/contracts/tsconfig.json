@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "module": "node20",
+    "moduleResolution": "node16",
+    "target": "ES2023",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "outDir": "dist",
+    "types": ["node"],
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true
+  },
+  "include": ["hardhat.config.ts", "test/**/*.ts"]
+}
