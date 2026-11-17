@@ -5,16 +5,19 @@
   "type": "module",
   "description": "LOANSHARK diagnostics surface: wallet detection, chain guard and QoreX message signing, browser only.",
   "scripts": {
-    "predev": "pnpm --filter @loanshark/chain-client build",
+    "predev": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build",
     "dev": "vite",
-    "prebuild": "pnpm --filter @loanshark/chain-client build",
+    "prebuild": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
-    "pretypecheck": "pnpm --filter @loanshark/chain-client build",
+    "pretest": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build",
+    "test": "vitest run --root ../.. apps/web/test",
+    "pretypecheck": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "preview": "vite preview --strictPort"
   },
   "dependencies": {
     "@loanshark/chain-client": "workspace:*",
+    "@loanshark/qoreseal-adapter": "workspace:*",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },
