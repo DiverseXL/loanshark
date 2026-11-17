@@ -4,17 +4,17 @@ Every requirement maps to an implementation path, a test path, an evidence path 
 
 Status values: `PENDING`, `IN PROGRESS`, `DONE`, `BLOCKED`.
 
-Last updated: Phase 4 (browser app foundation and read/sign-message wallet layer), 2026-11-17.
+Last updated: Step 6a (hackathon rules recorded and repository prepared for publication), 2026-11-17. Phase 4 rows below are unchanged.
 
 | ID | Assertion | Implementation | Test | Evidence | Status |
 |---|---|---|---|---|---|
 | M0-1 | QoreX exposes message signing that returns a hybrid signature | none (probe) | manual console probe | `evidence/phase-00-result.md` | DONE |
 | M0-2 | The account's ML-DSA key is registered on-chain | none (QoreX first transaction) | REST query | `evidence/phase-00-result.md` | DONE |
 | M0-3 | A QoreX hybrid signature verifies against the on-chain key | `packages/chain-client/src/verify-hybrid-message.ts` | `packages/chain-client/test/verify-hybrid-message.test.ts` (12 tests, mock client) and a live test gated on `LIVE_CHAIN=1` | `evidence/phase-01-result.md` | DONE (verified against the on-chain key on `qorechain-diana`; four tampering controls refused) |
-| M0-4 | Diana EVM chain ID, RPC, explorer, faucet confirmed | none | `eth_chainId` call | `evidence/phase-01-result.md` | IN PROGRESS (chain ID 9800 and RPC confirmed; explorer and faucet not checked) |
-| M0-5 | Hackathon rules, deadline, licence confirmed | none | n/a | pending | BLOCKED (link needed) |
+| M0-4 | Diana EVM chain ID, RPC, explorer, faucet confirmed | none | `eth_chainId` call | `evidence/phase-01-result.md`; `research/source-lock.md` claim 54 | IN PROGRESS (chain ID 9800 and RPC confirmed at runtime on 2026-11-16; the explorer `https://explore.qore.network` and the faucet `https://dashboard.qorechain.io/faucet` are recorded from the organiser's start page, docs only, and neither has been loaded in a browser by this project) |
+| M0-5 | Hackathon rules, deadline, licence confirmed | none | n/a | `research/source-lock.md` claims 45 to 56 | DONE (the rules, start and prizes pages fetched 2026-11-17; docs only, which is the appropriate kind of evidence for a rule. Differences from the earlier owner summary are recorded in the source lock) |
 | M0-6 | Path to register an ML-KEM key for a web-app user | unknown | n/a | `adr/0004` | BLOCKED |
-| M0-7 | Three `erc20:` denominations on the test account identified | none | read-only contract calls | `evidence/phase-01-result.md` | DONE (contract metadata only; issuer and backing unknown, not established as stablecoins) |
+| M0-7 | Three `erc20:` denominations on the test account identified | none | read-only contract calls | `evidence/phase-01-result.md`; `research/source-lock.md` claims 21 and 53 | DONE (the contracts report `Fest USD`/`fUSD` 6 decimals, `Fest ETH`/`fETH` 18 and `Fest BTC`/`fBTC` 8, and the organiser's start page names fUSD, fETH and fBTC as the fest faucet tokens. The deployer, issuer, mint control and backing are not verified. Not established as stablecoins) |
 | C1 | Wrong recipient cannot decrypt | `packages/qoreseal-adapter` (`sealMlkemToRecipient`, `openEnvelope`) | `packages/qoreseal-adapter/test/adapter.test.ts` ("C1: the wrong recipient cannot open it") | `evidence/phase-02-result.md` | DONE (offline, throwaway keys) |
 | C2 | Lender B cannot read lender A's offer | `packages/qoreseal-adapter` (one single-recipient envelope per offer) | `packages/qoreseal-adapter/test/adapter.test.ts` (two C2 tests) | `evidence/phase-02-result.md` | DONE (offline, throwaway keys; no app or UI e2e exists yet) |
 | C3 | Tampered envelope or wrong AAD is rejected | `packages/qoreseal-adapter` (`encodeAad`, signed envelopes) | `packages/qoreseal-adapter/test/adapter.test.ts` and `test/signed-envelope.test.ts` (flipped byte, each field, moved request); `test/aad.test.ts` (frozen vectors) | `evidence/phase-02-result.md` | DONE (offline, throwaway keys) |

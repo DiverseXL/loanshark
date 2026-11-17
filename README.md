@@ -6,6 +6,8 @@ Private financing on QoreChain: encrypted requests, separately encrypted lender 
 
 Built for the QoreChain hackathon, Encrypted Apps category. Target network: QoreChain Diana Testnet (`qorechain-diana`). Testnet only; not a regulated lending service.
 
+Submission deadline: 2 December 2026, 23:59 UTC. Internal freeze for this repository: 1 December 2026. The requirement-by-requirement checklist is `docs/SUBMISSION.md`; the rules are recorded in `docs/research/source-lock.md` claims 45 to 56.
+
 ## The problem
 
 Borrowers need capital without publishing their financial documents or negotiating positions. Lenders need enough detail to price a request without seeing each other's offers. Both sides need to know exactly which agreement they accepted, and money has to move under explicit rules.
@@ -60,7 +62,7 @@ See `docs/ARCHITECTURE.md` (component diagram, trust boundaries, the two signing
 3. **QoreSeal envelopes are not signed by QoreX.** This project adds a signed envelope, but its tests sign with a TEST-ONLY QoreSign key. The diagnostics app now has a QoreX `signArbitrary` signer, but it is used only for the fixed test message and is not wired to envelope signing. ADR-0003.
 4. **QoreSeal is 0.1.0 and pending external review** (its own documentation). The npm release is pinned exactly and its vectors pass; it has not been audited here.
 5. **No confirmed stablecoin on Diana.** The plan is a self-deployed, labelled test ERC-20. The three `erc20:` balances on the test account are contracts reporting `Fest ETH` (`fETH`, 18 decimals), `Fest BTC` (`fBTC`, 8) and `Fest USD` (`fUSD`, 6); their deployer, issuer and backing are unknown, so none is treated as a stablecoin.
-6. **Hackathon rules, deadline and licence requirement are unverified.** ADR-0001 is provisional.
+6. **The rules are recorded from the organiser's pages, not from a contract with the organiser.** The rules, start and prizes pages were fetched on 2026-11-17 and are summarised in `docs/research/source-lock.md` claims 45 to 56. The pages themselves say the rules, prizes and dates may change until the end of the event, and the rules page and the start page disagree on whether the cover image is required.
 7. **QoreX handles one signing request at a time.** The diagnostics signer queues requests defensively and its MOCK-provider test covers the queue. The wallet's own one-at-a-time behaviour is an owner report (source-lock claim 44), not reproduced here.
 8. **The QoreX dApp refusal list was read from the wallet-adapter source, not tested against QoreX.**
 9. **Only message signatures are verified.** `verifyHybridMessage` covers `signArbitrary` messages, not transactions. Envelope authentication is built offline, but every envelope test signs with a throwaway QoreSign key and a MOCK account client; the recorded real QoreX fixture's message text is the string reported as signed, not an independently captured one.
@@ -102,7 +104,7 @@ scripts/verify-env.mjs   toolchain version check
 .github/workflows/ci.yml install, checks and secret scan
 CHANGELOG.md             changes by phase
 CLAUDE.md                operating contract for AI coding agents
-LICENSE                  Apache-2.0 (provisional, ADR-0001)
+LICENSE                  Apache-2.0 (ADR-0001, accepted 2026-11-17)
 ```
 
 ## AI assistant disclosure

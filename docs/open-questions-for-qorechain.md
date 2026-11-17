@@ -58,14 +58,17 @@ Evidence: `docs/research/source-lock.md` claims 13, 22 and 30;
 
 ## 4. What are the official hackathon rules, deadline and licence requirement?
 
-Context: M0-5 is still open. The repository uses Apache-2.0 provisionally
-(`docs/adr/0001-licence.md`), and no rule text, deadline or licence requirement
-has been confirmed from an official source.
+Resolved on 2026-11-17 from the organiser's pages. The rules, start and prizes
+pages are recorded in `docs/research/source-lock.md` claims 45 to 56: deadline
+2 December 2026 at 23:59 UTC, public GitHub repository, MIT or Apache-2.0
+licence with the licence file in the repository, README, video of up to 3
+minutes, the testnet addresses used, and teams of 1 to 4 in Encrypted Apps.
+M0-5 is DONE and `docs/adr/0001-licence.md` is Accepted. The questions below are
+kept for the record, with one still open: the rules page and the start page
+disagree on whether the cover image is required.
 
-Question: where are the official rules published, what is the submission
-deadline and time zone, and what licence and repository-visibility
-requirements apply to an Encrypted Apps entry? Is a public GitHub repository
-required, and is a particular open-source licence mandated?
+Question (open): is the 16:9 cover image required, as the rules page implies,
+or optional, as the start page states?
 
-Evidence: `docs/research/source-lock.md` claim 16;
-`docs/ACCEPTANCE_MATRIX.md` M0-5; `docs/adr/0001-licence.md`.
+Evidence: `docs/research/source-lock.md` claims 45 to 56 and the "Mismatches"
+section; `docs/ACCEPTANCE_MATRIX.md` M0-5; `docs/SUBMISSION.md` S7.
