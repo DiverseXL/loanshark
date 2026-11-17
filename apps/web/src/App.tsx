@@ -110,6 +110,9 @@ export function App() {
     // refreshKey is the explicit restart trigger; this read keeps the
     // dependency meaningful to the hook linter.
     void refreshKey;
+    // A result from the previous wallet or chain must not survive a re-detect.
+    setSignState({ status: "idle" });
+    setRecordOutcome(null);
 
     const start = async (): Promise<void> => {
       const detected = await detectQorex({ timeoutMs: 600 });

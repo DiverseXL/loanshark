@@ -213,7 +213,7 @@ Production build, measured in this phase:
 ```
 dist/index.html                   1.12 kB │ gzip:   0.63 kB
 dist/assets/index-BMxtqMR9.css    2.07 kB │ gzip:   0.87 kB
-dist/assets/index-DA5Z1XcD.js   334.20 kB │ gzip: 109.98 kB
+dist/assets/index-CG_UUf91.js   334.23 kB │ gzip: 109.99 kB
 vite build: Done
 ```
 

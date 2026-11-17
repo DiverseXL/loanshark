@@ -1,6 +1,6 @@
 # Architecture
 
-Status: proposed, Phase 0. Nothing here is implemented. Components marked (blocked) depend on an unverified protocol capability.
+Status: Phase 4. The offline QoreSeal adapter, agreement package and local settlement contracts exist, and `apps/web` is a client-only diagnostics page with QoreX detection, a two-lane chain guard and fixed-message signing. The product UI, the API and any deployment do not exist. Components marked (blocked) depend on an unverified protocol capability.
 
 ## Components
 
