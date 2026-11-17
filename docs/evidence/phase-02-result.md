@@ -7,6 +7,10 @@ This file records commands and their unedited output. Nothing here is
 reconstructed. Where output was truncated for width or for length, it is marked
 as truncated.
 
+Redaction note, 2026-11-18: the absolute repository path printed by the tools
+was replaced with `<repo root>` when the repository was prepared for
+publication. The commands and their results are otherwise unchanged.
+
 ## Task 0: baseline
 
 Starting commit: `9380d89` (`docs: record M0-3 as done and close the ADR-0003
@@ -51,7 +55,7 @@ Toolchain matches the pinned versions.
 `pnpm test` output:
 
 ```
- RUN  v5.1.0 C:/Users/user/Documents/loanshark
+ RUN  v5.1.0 <repo root>
 
  ↓ packages/chain-client/test/verify-hybrid-message.live.test.ts (1 test | 1 skipped)
  ✓ packages/chain-client/test/smoke.test.ts (1 test) 37ms
@@ -152,7 +156,7 @@ pnpm vitest run packages/qoreseal-adapter/test/vectors.test.ts
 Output, unedited:
 
 ```
- RUN  v5.1.0 C:/Users/user/Documents/loanshark
+ RUN  v5.1.0 <repo root>
 
  ✓ packages/qoreseal-adapter/test/vectors.test.ts (20 tests) 1159ms
 
@@ -247,7 +251,7 @@ exit=0
 === pnpm test ===
 $ vitest run
 
- RUN  v5.1.0 C:/Users/user/Documents/loanshark
+ RUN  v5.1.0 <repo root>
 
  ✓ packages/qoreseal-adapter/test/cards.test.ts (5 tests) 2426ms
    ✓ recipient cards against a mocked registry (MOCK) (5)

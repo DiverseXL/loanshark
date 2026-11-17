@@ -107,6 +107,33 @@ CLAUDE.md                operating contract for AI coding agents
 LICENSE                  Apache-2.0 (ADR-0001, accepted 2026-11-17)
 ```
 
+## Credits
+
+Built with the QoreChain open source kits and the libraries below. Versions are pinned exactly in the workspace `package.json` files and `pnpm-lock.yaml`. Licence values were read from each installed package's `package.json` on 2026-11-18.
+
+| Component | Version | Licence | Used for |
+|---|---|---|---|
+| `@qorechain/qoreseal` | 0.1.0 | Apache-2.0 | Client-side ML-KEM-1024/X25519 envelope sealing and opening, recipient cards, official vector reproduction. The QoreChain kit this project is built on. |
+| `@qorechain/qoresign` | 0.2.0 | Apache-2.0 | Hybrid (secp256k1 + ML-DSA-87) message signature verification, recipient-card signatures and offline test keys. The second QoreChain kit used. |
+| `@noble/hashes` | 2.4.0 | MIT | SHA-256 for the envelope domain tag. |
+| `viem` | 2.57.11 | MIT | Chain reads, ABI encoding and the agreement commitment hash. |
+| `@openzeppelin/contracts` | 5.6.1 | MIT | `ERC20`, `Ownable`, `SafeERC20` and `ReentrancyGuard` in `TestUSD` and `LoanSettlement`. |
+| `react`, `react-dom` | 19.3.1 | MIT | The diagnostics page in `apps/web`. |
+| `vite` | 7.3.8 | MIT | Build tool for `apps/web`. |
+| `@vitejs/plugin-react` | 5.2.0 | MIT | React support in Vite. |
+| `typescript` | 5.9.3 | Apache-2.0 | All TypeScript packages and the app. |
+| `vitest` | 5.1.0 | MIT | Unit and static tests. |
+| `@biomejs/biome` | 2.6.8 | MIT OR Apache-2.0 | Formatting and linting. |
+| `hardhat` | 3.22.0 | MIT | Local in-process EVM and Solidity tests. |
+| `@nomicfoundation/hardhat-viem` | 3.1.0 | MIT | viem integration for the contract tests. |
+| `@nomicfoundation/hardhat-node-test-runner` | 3.1.2 | MIT | `node:test` runner for the contract tests. |
+| `@nomicfoundation/hardhat-network-helpers` | 3.0.12 | MIT | Time control in the contract tests. |
+| `@types/node`, `@types/react`, `@types/react-dom` | 26.6.6, 19.3.0, 19.3.0 | MIT | Type declarations for development only. |
+
+QoreChain kits: `@qorechain/qoreseal` and `@qorechain/qoresign` are the only QoreChain code used. No starter kit, template or `create-qorechain-dapp` output is used. `@qorechain/wallet-adapter` 0.6.0 was read as source for the wallet behaviour recorded in `docs/research/source-lock.md`; it is not a dependency.
+
+Not distributed with the repository: `solc` 0.8.34 (GPL-3.0), downloaded by Hardhat on first compile; `pnpm` 12.21.0 (MIT), the package manager; and the GitHub Actions `actions/checkout`, `pnpm/action-setup` and `actions/setup-node`, pinned by commit SHA in `.github/workflows/ci.yml` (MIT).
+
 ## AI assistant disclosure
 
 This repository is built with AI assistance under the phase-gated contract in `CLAUDE.md`. External technical claims are recorded in `docs/research/source-lock.md` with their source and whether they were confirmed against a running system rather than recalled.

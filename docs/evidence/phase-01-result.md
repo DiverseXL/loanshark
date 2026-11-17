@@ -4,6 +4,8 @@ Date started: 2026-11-16. Network: QoreChain Diana Testnet (`qorechain-diana`). 
 
 This file records commands and their unedited output. Nothing here is reconstructed. Where a value was truncated for width it is marked as truncated; nothing is paraphrased.
 
+Redaction note, 2026-11-18: the absolute repository path printed by the tools was replaced with `<repo root>` when the repository was prepared for publication. The commands and their results are otherwise unchanged.
+
 ## Task 0: environment and connectivity
 
 ### Tool versions
@@ -283,9 +285,9 @@ Output, unedited (the two leading `tsc` lines are the build):
 
 ```
 == SPIKE: QoreX signArbitrary response verification ==
-fixture: C:\Users\user\Documents\loanshark\fixtures\qorex-signarbitrary.json
+fixture: <repo root>\fixtures\qorex-signarbitrary.json
 fixture sha256: 63fd4db15bc582876414baa00a5dfd2b54c87d400518039a6b57f6f3a962fc94
-on-chain account fixture: C:\Users\user\Documents\loanshark\fixtures\onchain-account-qor1385.json
+on-chain account fixture: <repo root>\fixtures\onchain-account-qor1385.json
 account address on chain: qor1385wkhky3qkjwq47t8904xrd6s82lmkfjnxxsr
 account algorithm: id 1 (dilithium5)
 chain id: qorechain-diana
@@ -394,7 +396,7 @@ Output, unedited:
 ```
 $ vitest run
 
- RUN  v5.1.0 C:/Users/user/Documents/loanshark
+ RUN  v5.1.0 <repo root>
 
  ✓ packages/chain-client/test/smoke.test.ts (1 test) 10ms
  ↓ packages/chain-client/test/verify-hybrid-message.live.test.ts (1 test | 1 skipped)
@@ -423,7 +425,7 @@ Output, unedited:
 ```
 $ vitest run -- verify-hybrid-message.live
 
- RUN  v5.1.0 C:/Users/user/Documents/loanshark
+ RUN  v5.1.0 <repo root>
 
  ✓ packages/chain-client/test/smoke.test.ts (1 test) 11ms
  ✓ packages/chain-client/test/verify-hybrid-message.test.ts (12 tests) 272ms
