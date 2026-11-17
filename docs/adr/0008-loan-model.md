@@ -42,6 +42,11 @@ units. This ADR fixes the model before any contract or TypeScript code exists.
    provenance is unverified. (Proposed by assistant, owner to confirm.)
 8. The commitment is `keccak256(abi.encode(terms))`, computed on-chain, and the
    loan id is the commitment. (Proposed by assistant, owner to confirm.)
+9. The claim window is at least 3600 seconds: `claimDeadline` must be at least
+   `fundingDeadline + 3600`. (Owner confirmed N = 3600 in chat on 2026-11-17.)
+   This is a project guard against a borrower being given no time to claim;
+   it is not a QoreChain rule. The value is exposed as the public constant
+   `MINIMUM_CLAIM_WINDOW`.
 
 ## Terms
 
@@ -76,7 +81,10 @@ decision):
 - `borrower != address(0)`, `lender != address(0)`, `borrower != lender`.
 - `principal > 0`; `interest` may be zero.
 - `token` is on the immutable allowlist.
-- `fundingDeadline > block.timestamp` and `claimDeadline >= fundingDeadline`.
+- `fundingDeadline > block.timestamp`.
+- `claimDeadline >= fundingDeadline + 3600` (`ClaimWindowTooShort` otherwise);
+  the weaker `claimDeadline >= fundingDeadline` check remains and reports
+  `InvalidTerms` first.
 - `dueDate > claimDeadline`.
 - `loanId` has never been proposed before.
 

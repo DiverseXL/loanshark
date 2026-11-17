@@ -16,6 +16,11 @@ Status: initial, Phase 0. Each row needs a test before its milestone can be mark
 | T10 | Decimal and amount errors | Amounts are base units; no rate math; no decimal assumption | `packages/contracts/test/lifecycle.test.ts` runs the lifecycle with a 6-decimal and an 18-decimal token; `test/invariants.test.ts` asserts exact outstanding and balances |
 | T11 | Replay or duplicate repayment | One loan per commitment, strict state checks, exact outstanding | `packages/contracts/test/lifecycle.test.ts` (duplicate proposal, double fund, double claim, repayment after Repaid) and `test/default.test.ts` |
 | T12 | Metadata leakage | Minimise and document; no privacy claims beyond evidence | Limitations list |
+| T15 | A lender funds terms that do not match the signed agreement | The UI must recompute the commitment and compare it with `loanId` and `termsOf()` before enabling fund; the contract only commits to the terms it is given and cannot verify a signature or document | C11 in `docs/ACCEPTANCE_MATRIX.md` (PENDING, `apps/web` not built) |
+| T16 | A borrower is given no time to claim | `LoanSettlement` requires `claimDeadline >= fundingDeadline + MINIMUM_CLAIM_WINDOW` (3600 seconds, owner-confirmed) | `packages/contracts/test/review.test.ts` (3599 reverts, 3600 succeeds); ADR-0008 decision 9 |
+| T17 | Tokens sent directly to the contract are lost | No sweep function exists by design; such tokens are outside every loan's accounting and stay in the contract | `packages/contracts/test/review.test.ts` (donation does not change accounting and cannot be withdrawn) |
+| T18 | A blocklisting or fee-changing token breaks settlement | Out of scope: the immutable allowlist is intended to hold only this project's `TestUSD`, which has no blocklist or fee | Limitations list; `TestUSD` source reviewed |
+| T19 | `block.timestamp` on Diana has different semantics or skew from this machine | Read-only block-time comparison during Phase 3b; treat deadlines as approximate until confirmed | `evidence/phase-03b-result.md` (read-only sample); ADR-0011 |
 | T13 | Lost decryption key | Backup phrase shown once; documented loss of data (ADR-0005) | UX review |
 | T14 | Concurrent signing requests rejected by QoreX | Queue requests in the UI | UI test |
 

@@ -4,7 +4,7 @@ Every requirement maps to an implementation path, a test path, an evidence path 
 
 Status values: `PENDING`, `IN PROGRESS`, `DONE`, `BLOCKED`.
 
-Last updated: Phase 3 (M3 and M4, local only), 2026-11-17.
+Last updated: Phase 3b (settlement review follow-up), 2026-11-17.
 
 | ID | Assertion | Implementation | Test | Evidence | Status |
 |---|---|---|---|---|---|
@@ -25,6 +25,7 @@ Last updated: Phase 3 (M3 and M4, local only), 2026-11-17.
 | C8 | Wrong chain is rejected by the app | `apps/web` | e2e | pending | PENDING |
 | C9 | Native hybrid transaction followed by an EVM transaction under an authorised window | `apps/web`, `packages/chain-client` | e2e on Diana | pending | PENDING (window must be opened in QoreX) |
 | C10 | No key material or plaintext reaches the server | `apps/api` | test plus review | pending | PENDING |
+| C11 | The UI recomputes the commitment from the signed agreement and compares it with the `loanId` and `termsOf()` before enabling fund | `apps/web` (not yet built) | pending (UI e2e) | pending | PENDING |
 | T3 | A recipient card for a different KEM key is rejected | `packages/qoreseal-adapter` (uses the official `verifyRecipientCard`) | `packages/qoreseal-adapter/test/cards.test.ts` against a MOCKED registry | `evidence/phase-02-result.md` | DONE (offline, throwaway keys, mocked registry; no real chain call) |
 | T5 | Forged sender is rejected: classical-only and wrong-key signatures | `packages/qoreseal-adapter` (`verifySignedEnvelope` via `verifyHybridMessage`) | `packages/qoreseal-adapter/test/signed-envelope.test.ts` ("T5", "T5 and T7") | `evidence/phase-02-result.md` | DONE (offline, throwaway keys, mocked account client) |
 | T6 | A lender cannot forge a request variant for another lender | `packages/qoreseal-adapter` (domain-tagged hash over envelope bytes plus AAD) | `packages/qoreseal-adapter/test/signed-envelope.test.ts` ("T6") | `evidence/phase-02-result.md` | DONE (offline, throwaway keys, mocked account client) |

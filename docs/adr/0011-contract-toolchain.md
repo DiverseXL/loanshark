@@ -48,6 +48,7 @@ solidity: {
       version: "0.8.34",
       settings: {
         optimizer: { enabled: true, runs: 200 },
+        evmVersion: "osaka",
       },
     },
   },
@@ -58,6 +59,39 @@ ASSUMPTION: optimizer enabled at 200 runs is appropriate for this local demo.
 It is not tuned, and no gas claim is made. The compiler version is fixed to
 0.8.34 rather than a floating pragma in the project's own contracts;
 OpenZeppelin 5.6.1 supports it.
+
+## EVM target compatibility on Diana (Phase 3b)
+
+`evmVersion` is set to `osaka`, the highest of four targets whose creation
+simulations succeeded. The measurements used read-only
+`eth_estimateGas` calls with no `to` field and the creation bytecode as
+`data`, `from` = `0xd0a1453c7b8157aa0635076c33b3e24a50a923c5`, and a non-zero
+placeholder allowlist entry for `LoanSettlement`. No transaction was sent or
+signed. Raw requests and responses are in
+`docs/evidence/phase-03b-estimate-gas.json`.
+
+| evmVersion | LoanSettlement estimate | TestUSD estimate | Outcome |
+|---|---|---|---|
+| `osaka` | 1,850,285 | 604,452 | success |
+| `cancun` | 1,850,285 | 604,452 | success |
+| `shanghai` | 1,850,285 | 609,204 | success |
+| `paris` | 1,871,392 | 618,732 | success |
+
+The chain reported `eth_chainId` `0x2648` (9800, Diana) during the run.
+
+ASSUMPTION: a successful `eth_estimateGas` shows that the node accepts the
+creation opcodes for that target; it does not prove that every runtime path is
+safe, that the bytecode is correct, or that a real deployment would succeed
+under network conditions. It is not a deployment and no deployability claim is
+made.
+
+Block time: three read-only `eth_getBlockByNumber("latest")` samples one
+minute apart compared the block timestamp with the local UTC clock. The block
+timestamp was 1.174 to 2.378 seconds behind the local clock (block timestamps
+have whole-second resolution and the comparison includes request latency).
+Diana's exact timestamp rule and any future drift are not confirmed; deadlines
+must be treated as approximate. Raw samples are in
+`docs/evidence/phase-03b-block-time.json`.
 
 ## Test runner and network
 

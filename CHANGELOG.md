@@ -4,6 +4,22 @@ No release has been made. The project is built one phase at a time and each entr
 
 ## Unreleased
 
+### Phase 3b: settlement review follow-up
+
+Added:
+
+- Minimum claim window: `claimDeadline` must be at least `fundingDeadline + 3600` seconds, with the public constant `MINIMUM_CLAIM_WINDOW` and custom error `ClaimWindowTooShort`. Owner confirmed N = 3600 in chat; ADR-0008 decision 9.
+- Ten review tests in `packages/contracts/test/review.test.ts`: expire on Funded, re-proposal after cancel and expire, the 3599/3600 claim-window boundary, claim after refund, defaulted non-borrower repayment, the partial-repayment/default/two-withdrawal sequence, direct-token donations, and reentry through `withdraw` and `claim`.
+- The reentrant mock token can now target `repay`, `withdraw` or `claim`; the existing repay test is unchanged.
+- C11 (UI commitment check before fund) as PENDING, plus threat-model rows T15 to T19 and README limitations 16 to 20.
+- Read-only Diana compatibility evidence: creation estimates for `osaka`, `cancun`, `shanghai` and `paris`, three block-time samples, and raw JSON in `docs/evidence/phase-03b-*`.
+
+Changed:
+
+- `proposeLoan` checks for an existing loan id before deadline validation, so re-proposing the same terms reports `LoanExists` after cancel or expire.
+- Hardhat now sets `evmVersion: "osaka"` explicitly, the highest target whose creation simulations succeeded. ADR-0011 records the table and the assumption that a successful estimate is not a runtime-safety proof.
+- Contract tests: 33 passing (was 23). Vitest remains 83 passing with 1 skipped.
+
 ### Phase 3: agreement commitment and local settlement contracts
 
 Added:

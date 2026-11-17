@@ -2,7 +2,7 @@
 
 Private financing on QoreChain: encrypted requests, separately encrypted lender offers, a verifiable agreement commitment, and real test-token settlement.
 
-> Status: Phase 3 (M3 and M4, local only). This repository contains the architecture, threat model, decision records and source lock from Phase 0, a hybrid signature verifier in `packages/chain-client`, an offline QoreSeal adapter in `packages/qoreseal-adapter`, an agreement package in `packages/agreement`, and a local Hardhat settlement package in `packages/contracts`. The on-chain ML-KEM registration path is BLOCKED, so the adapter uses explicit mlkem mode only. No contract has been deployed and there is no product app or API. Every claim below is either backed by a link into `docs/` or marked as not yet built.
+> Status: Phase 3b (M3 and M4, local only, review follow-up applied). This repository contains the architecture, threat model, decision records and source lock from Phase 0, a hybrid signature verifier in `packages/chain-client`, an offline QoreSeal adapter in `packages/qoreseal-adapter`, an agreement package in `packages/agreement`, and a local Hardhat settlement package in `packages/contracts`. The on-chain ML-KEM registration path is BLOCKED, so the adapter uses explicit mlkem mode only. No contract has been deployed and there is no product app or API. Every claim below is either backed by a link into `docs/` or marked as not yet built.
 
 Built for the QoreChain hackathon, Encrypted Apps category. Target network: QoreChain Diana Testnet (`qorechain-diana`). Testnet only; not a regulated lending service.
 
@@ -30,7 +30,7 @@ No zero-knowledge proofs, FHE or confidential computation are used or claimed.
 | M1 | Cryptographic vertical slice | Offline slice built and tested: `packages/qoreseal-adapter` (seal/open in explicit mlkem mode, canonical AAD, signed envelopes), with the official QoreSeal 0.1.0 vectors passing. On-chain KEM key registration and hybrid mode remain BLOCKED (ADR-0004). Evidence in `docs/evidence/phase-02-result.md` |
 | M2 | Private request and offer workflow | Not started |
 | M3 | Agreement commitment | Local: terms, `keccak256(abi.encode(terms))` commitment, canonical agreement text and signed confirmation. 15 tests. Evidence in `docs/evidence/phase-03-result.md` |
-| M4 | Test token and settlement contracts | Local: `TestUSD` and `LoanSettlement` on the in-process Hardhat network, with 23 tests including adversarial mock tokens and a seeded 200-run invariant test. Not deployed. Evidence in `docs/evidence/phase-03-result.md` |
+| M4 | Test token and settlement contracts | Local: `TestUSD` and `LoanSettlement` on the in-process Hardhat network, with 33 tests including adversarial mock tokens, a seeded 200-run invariant test and the Phase 3b review cases. Not deployed. Evidence in `docs/evidence/phase-03-result.md` and `docs/evidence/phase-03b-result.md` |
 | M5 | Hybrid authorisation and wallet flow | Not started |
 | M6 | Integrated UI | Not started |
 | M7 | Hardening and evidence pack | Not started |
@@ -69,6 +69,11 @@ See `docs/ARCHITECTURE.md` (component diagram, trust boundaries, the two signing
 13. **The contracts are local only and unaudited.** They run on the in-process Hardhat network and have never been deployed to Diana or any other chain. No gas, security or economic review has been done beyond the tests listed in `docs/evidence/phase-03-result.md`.
 14. **The qor1-to-0x identity link is unconfirmed.** The derived address is `0xd0a1453c7b8157aa0635076c33b3e24a50a923c5`, but the owner has not compared it with the address QoreX reports on its EVM provider. ADR-0009 records the check and the fallback.
 15. **The only production-intended token is the project's own test token.** `TestUSD` is labelled testnet demo money and has no value. The Fest tokens on the account are not used. Contract tests additionally deploy clearly named `Mock...` tokens; those are test only.
+16. **The contract does not verify the signed agreement.** A lender must compare the stored terms with the signed document, and the UI must recompute the commitment and compare it with `loanId` and `termsOf()` before enabling `fund`. The contract only commits to the terms it is given; it cannot verify a signature or read a document. C11 is PENDING because `apps/web` does not exist.
+17. **The claim window is a project minimum, not a chain rule.** As of Phase 3b, `claimDeadline` must be at least 3600 seconds after `fundingDeadline` (owner-confirmed, ADR-0008 decision 9). Before that change a zero-length window was allowed.
+18. **`block.timestamp` semantics on Diana are not yet confirmed.** Phase 3b samples the latest block time against the local clock, but deadlines remain approximate and depend on Diana block production. ADR-0011.
+19. **Tokens sent directly to the contract are stuck.** They are outside every loan's accounting, no function can withdraw them, and there is no admin sweep. This is deliberate but means a mistaken transfer is unrecoverable.
+20. **Blocklisting and fee-changing tokens are out of scope.** The immutable allowlist is intended to hold only this project's `TestUSD`, which has no blocklist or transfer fee. The adversarial mock tokens exist only in tests.
 
 ## Repository structure
 
