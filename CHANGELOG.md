@@ -4,6 +4,29 @@ No release has been made. The project is built one phase at a time and each entr
 
 ## Unreleased
 
+### Phase 2: M1 offline cryptographic slice
+
+Added:
+
+- `packages/qoreseal-adapter`, a typed offline wrapper around `@qorechain/qoreseal` 0.1.0. It exposes sealing to one recipient in explicit mlkem mode, opening with typed failures, and no network helpers.
+- `@qorechain/qoreseal` 0.1.0 pinned exactly, with the official `vectors/qoreseal-v1.json` copied unedited to `fixtures/qoreseal-vectors-v1.json`; its 20 cases pass in this repository.
+- `src/aad.ts` and ADR-0007: an eight-field, length-prefixed canonical AAD encoding, frozen in `fixtures/aad-vectors.json`.
+- `src/envelope.ts`: `SignedEnvelope`, `MessageSigner`, a domain-tagged SHA-256 message, `signEnvelope` and `verifySignedEnvelope` on top of `verifyHybridMessage` with the post-quantum part required.
+- `src/testing.ts` as a separate TEST-ONLY entry point: throwaway identity generation, a QoreSign-backed signer, a classical-only signer and a mocked account client.
+- 55 tests covering C1 to C3 and T3, T5 to T7, plus hygiene: no network imports, no console output, no secret keys in results. Signing uses throwaway keys and the account/registry clients are mocked and labelled.
+- `docs/open-questions-for-qorechain.md` and `docs/evidence/phase-02-result.md`.
+
+Changed:
+
+- Source lock claims 22 to 30 and a corrected claim 13: the TypeScript package is on npm, and its API surface, vectors, modes, card helpers and injected fetch are recorded.
+- Acceptance matrix: C1 to C3 and T3, T5 to T7 DONE with offline, throwaway-key evidence. README milestone M1 and limitations; threat-model test references; ADRs 0003 to 0005 and 0007.
+
+Known in this phase:
+
+- The on-chain KEM key registration path is still BLOCKED, so hybrid mode is not exposed by the adapter and no real account can use the offline slice yet.
+- The real QoreX signer is deferred; tests use QoreSign with throwaway keys and a mock account client.
+- CI has still not run on GitHub because no remote is configured.
+
 ### Phase 1: workspace, verification groundwork, read-only chain checks
 
 Added:
