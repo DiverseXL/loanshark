@@ -96,7 +96,7 @@ describe("LoanSettlement time boundaries", async function () {
       lender,
       token: token.address,
       now: await now(net),
-      dueIn: 3_000n,
+      dueIn: 6_000n,
       graceSeconds: 300n,
     });
     const loanId = await openActiveLoan(world, terms);

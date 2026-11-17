@@ -58,6 +58,7 @@ contract LoanSettlement is ReentrancyGuard {
     error FundingDeadlineNotReached();
     error ClaimDeadlinePassed();
     error ClaimDeadlineNotReached();
+    error ClaimWindowTooShort(uint256 minimum);
     error DefaultNotYetAvailable();
     error NothingToWithdraw();
     error ZeroAmount();
@@ -90,6 +91,9 @@ contract LoanSettlement is ReentrancyGuard {
     event LoanCancelled(bytes32 indexed loanId);
     event LoanExpired(bytes32 indexed loanId);
     event LoanRefunded(bytes32 indexed loanId, address indexed lender, uint256 amount);
+
+    /// @notice Minimum gap between the funding and claim deadlines, in seconds.
+    uint256 public constant MINIMUM_CLAIM_WINDOW = 3_600;
 
     mapping(bytes32 => Loan) private _loans;
     mapping(address => bool) private _allowedToken;
@@ -151,10 +155,12 @@ contract LoanSettlement is ReentrancyGuard {
 
     function proposeLoan(Terms calldata terms) external returns (bytes32 loanId) {
         if (msg.sender != terms.borrower) revert NotBorrower(msg.sender);
-        _validateTerms(terms);
 
         loanId = _commitment(terms);
+        // Check reuse before the deadline validation, so an id that was already
+        // proposed always reports LoanExists even after it expired.
         if (_loans[loanId].state != State.None) revert LoanExists(loanId);
+        _validateTerms(terms);
 
         Loan storage loan = _loans[loanId];
         loan.terms = terms;
@@ -297,6 +303,9 @@ contract LoanSettlement is ReentrancyGuard {
         if (!_allowedToken[terms.token]) revert TokenNotAllowed(terms.token);
         if (terms.fundingDeadline <= block.timestamp) revert FundingDeadlinePassed();
         if (terms.claimDeadline < terms.fundingDeadline) revert InvalidTerms();
+        if (uint256(terms.claimDeadline) < uint256(terms.fundingDeadline) + MINIMUM_CLAIM_WINDOW) {
+            revert ClaimWindowTooShort(MINIMUM_CLAIM_WINDOW);
+        }
         if (terms.dueDate <= terms.claimDeadline) revert InvalidTerms();
         if (terms.principal > type(uint256).max - terms.interest) revert InvalidTerms();
     }

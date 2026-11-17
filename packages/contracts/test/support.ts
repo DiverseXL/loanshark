@@ -89,10 +89,10 @@ export function makeTerms(options: TermOptions) {
     salt = nextSalt(),
     principal = 1_000n * ONE_USD,
     interest = 50n * ONE_USD,
-    dueIn = 3_000n,
+    dueIn = 5_600n,
     graceSeconds = 300n,
     fundingIn = 1_000n,
-    claimIn = 2_000n,
+    claimIn = 4_600n,
   } = options;
 
   return {

@@ -14,10 +14,10 @@ describe("LoanSettlement default", async function () {
       lender,
       token: token.address,
       now: await now(net),
-      dueIn: 1_000n,
+      dueIn: 4_400n,
       graceSeconds: 100n,
       fundingIn: 300n,
-      claimIn: 500n,
+      claimIn: 3_900n,
     });
     const loanId = await openActiveLoan(world, terms);
 
@@ -94,10 +94,10 @@ describe("LoanSettlement default", async function () {
       lender,
       token: token.address,
       now: await now(net),
-      dueIn: 500n,
+      dueIn: 4_000n,
       graceSeconds: 0n,
       fundingIn: 200n,
-      claimIn: 300n,
+      claimIn: 3_800n,
     });
     const loanId = await openActiveLoan(world, terms);
     await net.networkHelpers.time.increaseTo(Number(terms.dueDate + 1n));
