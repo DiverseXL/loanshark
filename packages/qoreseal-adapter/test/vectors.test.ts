@@ -100,7 +100,14 @@ interface Vectors {
     x25519PublicKey: string;
     shared: string;
   };
-  kdf: { shared: string; chainId: string; purpose: string; salt: string; info: string; key: string }[];
+  kdf: {
+    shared: string;
+    chainId: string;
+    purpose: string;
+    salt: string;
+    info: string;
+    key: string;
+  }[];
   hint: { salt: string; recipient: number; hint: string };
   envelopes: VectorEnvelope[];
   negative: VectorNegative[];
@@ -134,9 +141,7 @@ interface Vectors {
   sizes: { mode: "hybrid" | "mlkem"; recipients: number; plaintextLength: number; size: number }[];
 }
 
-const v = JSON.parse(
-  readFileSync(join(FIXTURES, "qoreseal-vectors-v1.json"), "utf8"),
-) as Vectors;
+const v = JSON.parse(readFileSync(join(FIXTURES, "qoreseal-vectors-v1.json"), "utf8")) as Vectors;
 
 const hex = qs.toHex;
 const unhex = qs.fromHex;
@@ -275,7 +280,15 @@ describe("published QoreSeal vectors", () => {
           const pair = keys[i];
           if (!pair) throw new Error(`vector names recipient ${i}`);
           expect(
-            hex(qs.open({ chainId: v.chainId, purpose: v.purpose, envelope: env, keys: pair, aad: unhex(e.aad) })),
+            hex(
+              qs.open({
+                chainId: v.chainId,
+                purpose: v.purpose,
+                envelope: env,
+                keys: pair,
+                aad: unhex(e.aad),
+              }),
+            ),
           ).toBe(e.plaintext);
         }
         const parsed = qs.parseEnvelope(env);
@@ -311,7 +324,10 @@ describe("published QoreSeal vectors", () => {
         expect(code, n.name).toBe(n.error);
       }
       for (const t of v.textNegative) {
-        expect(codeOf(() => qs.envelopeFromText(t.text)), t.name).toBe(t.error);
+        expect(
+          codeOf(() => qs.envelopeFromText(t.text)),
+          t.name,
+        ).toBe(t.error);
       }
     });
 
@@ -443,7 +459,6 @@ describe("published QoreSeal vectors", () => {
     });
   });
 });
-
 
 function sha3(data: Uint8Array): Uint8Array {
   return new Uint8Array(createHash("sha3-256").update(data).digest());
