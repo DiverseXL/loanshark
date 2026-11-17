@@ -1,8 +1,9 @@
 # ADR-0008: Loan model, commitment and settlement state machine
 
-Status: Proposed. Every decision below is proposed by the assistant and awaits
-owner confirmation in chat. Nothing here is drawn from a QoreChain
-specification; it is this project's model.
+Status: Accepted. Decisions 1 to 8 were proposed by the assistant and confirmed
+by the owner in chat on 2026-11-17; decision 9 was confirmed the same day.
+Nothing here is drawn from a QoreChain specification; it is this project's
+model.
 
 Context: The app needs an on-chain agreement whose identity is a hash of its
 terms, so both parties can confirm the same document off-chain and the chain
@@ -12,36 +13,36 @@ units. This ADR fixes the model before any contract or TypeScript code exists.
 
 ## Decisions
 
-1. One borrower and one lender per loan. (Proposed by assistant, owner to
-   confirm.)
+1. One borrower and one lender per loan. (Owner confirmed in chat on
+   2026-11-17.)
 2. The borrower proposes terms with `proposeLoan`. The lender accepts by
    calling `fund`, which escrows the principal. The borrower then calls
    `claim`, which pays the principal out. An unfunded proposal can be closed by
    the borrower with `cancel`, or by anyone with `expire` after
    `fundingDeadline`. A funded but unclaimed loan is refundable to the lender
-   with `refund` after `claimDeadline`. (Proposed by assistant, owner to
-   confirm.)
+   with `refund` after `claimDeadline`. (Owner confirmed in chat on
+   2026-11-17.)
 3. Interest is a fixed absolute amount in token base units. There is no rate,
-   APR, compounding or per-second math on-chain. (Proposed by assistant, owner
-   to confirm.)
+   APR, compounding or per-second math on-chain. (Owner confirmed in chat on
+   2026-11-17.)
 4. The borrower may repay partially at any time while the loan is `Active` or
    `Defaulted`. A repayment may not exceed the outstanding amount; an
    overpayment reverts. There is one `dueDate` and one `graceSeconds` value.
-   (Proposed by assistant, owner to confirm.)
+   (Owner confirmed in chat on 2026-11-17.)
 5. After `dueDate + graceSeconds`, with a balance outstanding, anyone may call
    `markDefault`. There is no collateral, liquidation or penalty. Repayments
    remain accepted after default, and paying the outstanding amount in full
-   moves the loan to `Repaid`. (Proposed by assistant, owner to confirm.)
+   moves the loan to `Repaid`. (Owner confirmed in chat on 2026-11-17.)
 6. Repayments are credited to the lender and withdrawn by the lender, not
-   pushed to the lender during repayment (pull payments). (Proposed by
-   assistant, owner to confirm.)
+   pushed to the lender during repayment (pull payments). (Owner confirmed in
+   chat on 2026-11-17.)
 7. Tokens are an immutable allowlist fixed at deployment. There is no admin
    function to add or remove a token and no upgrade path. The production
    deployment is intended to contain only this project's labelled test token.
    The `Fest` tokens found on the test account are not used because their
-   provenance is unverified. (Proposed by assistant, owner to confirm.)
+   provenance is unverified. (Owner confirmed in chat on 2026-11-17.)
 8. The commitment is `keccak256(abi.encode(terms))`, computed on-chain, and the
-   loan id is the commitment. (Proposed by assistant, owner to confirm.)
+   loan id is the commitment. (Owner confirmed in chat on 2026-11-17.)
 9. The claim window is at least 3600 seconds: `claimDeadline` must be at least
    `fundingDeadline + 3600`. (Owner confirmed N = 3600 in chat on 2026-11-17.)
    This is a project guard against a borrower being given no time to claim;
