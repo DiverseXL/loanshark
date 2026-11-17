@@ -14,7 +14,7 @@
     "lint": "biome lint .",
     "format:check": "biome format .",
     "typecheck": "pnpm -r --if-present typecheck",
-    "test": "vitest run",
+    "test": "vitest run && pnpm --filter @loanshark/contracts test",
     "build": "pnpm -r --if-present build"
   },
   "devDependencies": {

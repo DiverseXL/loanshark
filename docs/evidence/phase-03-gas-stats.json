@@ -1,0 +1,347 @@
+{
+  "contracts": {
+    "contracts/LoanSettlement.sol:LoanSettlement": {
+      "sourceName": "contracts/LoanSettlement.sol",
+      "contractName": "LoanSettlement",
+      "proxyChain": [],
+      "deployment": {
+        "min": 1756948,
+        "max": 1869822,
+        "avg": 1856420,
+        "median": 1869822,
+        "count": 22,
+        "runtimeSize": 7731
+      },
+      "functions": {
+        "cancel": {
+          "min": 30532,
+          "max": 30532,
+          "avg": 30532,
+          "median": 30532,
+          "count": 1
+        },
+        "claim": {
+          "min": 53654,
+          "max": 57501,
+          "avg": 55319,
+          "median": 55318,
+          "count": 212
+        },
+        "commitmentOf": {
+          "min": 27540,
+          "max": 28020,
+          "avg": 27723,
+          "median": 27720,
+          "count": 230
+        },
+        "expire": {
+          "min": 30583,
+          "max": 30583,
+          "avg": 30583,
+          "median": 30583,
+          "count": 1
+        },
+        "fund": {
+          "min": 60533,
+          "max": 79794,
+          "avg": 77554,
+          "median": 77633,
+          "count": 217
+        },
+        "isAllowedToken": {
+          "min": 24038,
+          "max": 24038,
+          "avg": 24038,
+          "median": 24038,
+          "count": 2
+        },
+        "markDefault": {
+          "min": 30719,
+          "max": 30719,
+          "avg": 30719,
+          "median": 30719,
+          "count": 3
+        },
+        "outstandingOf": {
+          "min": 24285,
+          "max": 30824,
+          "avg": 28587,
+          "median": 30672,
+          "count": 620
+        },
+        "proposeLoan": {
+          "min": 214283,
+          "max": 214403,
+          "avg": 214320,
+          "median": 214319,
+          "count": 223
+        },
+        "refund": {
+          "min": 55327,
+          "max": 60151,
+          "avg": 57739,
+          "median": 57739,
+          "count": 2
+        },
+        "repaidOf": {
+          "min": 24119,
+          "max": 24119,
+          "avg": 24119,
+          "median": 24119,
+          "count": 1
+        },
+        "repay": {
+          "min": 68641,
+          "max": 124189,
+          "avg": 93914,
+          "median": 102865,
+          "count": 622
+        },
+        "stateOf": {
+          "min": 24150,
+          "max": 24174,
+          "avg": 24172,
+          "median": 24174,
+          "count": 222
+        },
+        "withdraw": {
+          "min": 46861,
+          "max": 48207,
+          "avg": 48187,
+          "median": 48192,
+          "count": 329
+        },
+        "withdrawableOf": {
+          "min": 24031,
+          "max": 24055,
+          "avg": 24053,
+          "median": 24055,
+          "count": 1864
+        }
+      }
+    },
+    "contracts/mocks/MockDecimals18.sol:MockDecimals18": {
+      "sourceName": "contracts/mocks/MockDecimals18.sol",
+      "contractName": "MockDecimals18",
+      "proxyChain": [],
+      "deployment": {
+        "min": 508260,
+        "max": 508260,
+        "avg": 508260,
+        "median": 508260,
+        "count": 17,
+        "runtimeSize": 1862
+      },
+      "functions": {
+        "approve": {
+          "min": 46678,
+          "max": 46678,
+          "avg": 46678,
+          "median": 46678,
+          "count": 34
+        },
+        "balanceOf": {
+          "min": 23979,
+          "max": 23991,
+          "avg": 23987,
+          "median": 23991,
+          "count": 3
+        },
+        "mint": {
+          "min": 51327,
+          "max": 68439,
+          "avg": 59883,
+          "median": 59883,
+          "count": 34
+        }
+      }
+    },
+    "contracts/mocks/MockFalseReturnToken.sol:MockFalseReturnToken": {
+      "sourceName": "contracts/mocks/MockFalseReturnToken.sol",
+      "contractName": "MockFalseReturnToken",
+      "proxyChain": [],
+      "deployment": {
+        "min": 199185,
+        "max": 199185,
+        "avg": 199185,
+        "median": 199185,
+        "count": 1,
+        "runtimeSize": 675
+      },
+      "functions": {
+        "approve": {
+          "min": 44574,
+          "max": 44574,
+          "avg": 44574,
+          "median": 44574,
+          "count": 2
+        },
+        "balanceOf": {
+          "min": 23995,
+          "max": 23995,
+          "avg": 23995,
+          "median": 23995,
+          "count": 1
+        },
+        "mint": {
+          "min": 44234,
+          "max": 44246,
+          "avg": 44240,
+          "median": 44240,
+          "count": 2
+        }
+      }
+    },
+    "contracts/mocks/MockFeeOnTransferToken.sol:MockFeeOnTransferToken": {
+      "sourceName": "contracts/mocks/MockFeeOnTransferToken.sol",
+      "contractName": "MockFeeOnTransferToken",
+      "proxyChain": [],
+      "deployment": {
+        "min": 540997,
+        "max": 540997,
+        "avg": 540997,
+        "median": 540997,
+        "count": 1,
+        "runtimeSize": 2013
+      },
+      "functions": {
+        "approve": {
+          "min": 46678,
+          "max": 46678,
+          "avg": 46678,
+          "median": 46678,
+          "count": 1
+        },
+        "balanceOf": {
+          "min": 23979,
+          "max": 23991,
+          "avg": 23983,
+          "median": 23979,
+          "count": 3
+        },
+        "mint": {
+          "min": 68523,
+          "max": 68523,
+          "avg": 68523,
+          "median": 68523,
+          "count": 1
+        }
+      }
+    },
+    "contracts/mocks/MockNoReturnToken.sol:MockNoReturnToken": {
+      "sourceName": "contracts/mocks/MockNoReturnToken.sol",
+      "contractName": "MockNoReturnToken",
+      "proxyChain": [],
+      "deployment": {
+        "min": 290757,
+        "max": 290757,
+        "avg": 290757,
+        "median": 290757,
+        "count": 1,
+        "runtimeSize": 1099
+      },
+      "functions": {
+        "approve": {
+          "min": 44574,
+          "max": 44574,
+          "avg": 44574,
+          "median": 44574,
+          "count": 2
+        },
+        "balanceOf": {
+          "min": 23983,
+          "max": 23995,
+          "avg": 23989,
+          "median": 23989,
+          "count": 2
+        },
+        "mint": {
+          "min": 44234,
+          "max": 44246,
+          "avg": 44240,
+          "median": 44240,
+          "count": 2
+        }
+      }
+    },
+    "contracts/mocks/MockReentrantToken.sol:MockReentrantToken": {
+      "sourceName": "contracts/mocks/MockReentrantToken.sol",
+      "contractName": "MockReentrantToken",
+      "proxyChain": [],
+      "deployment": {
+        "min": 590263,
+        "max": 590263,
+        "avg": 590263,
+        "median": 590263,
+        "count": 1,
+        "runtimeSize": 2241
+      },
+      "functions": {
+        "approve": {
+          "min": 46701,
+          "max": 46701,
+          "avg": 46701,
+          "median": 46701,
+          "count": 2
+        },
+        "balanceOf": {
+          "min": 23992,
+          "max": 23992,
+          "avg": 23992,
+          "median": 23992,
+          "count": 1
+        },
+        "mint": {
+          "min": 53551,
+          "max": 70663,
+          "avg": 62107,
+          "median": 62107,
+          "count": 2
+        },
+        "setReentry": {
+          "min": 88718,
+          "max": 88718,
+          "avg": 88718,
+          "median": 88718,
+          "count": 1
+        }
+      }
+    },
+    "contracts/TestUSD.sol:TestUSD": {
+      "sourceName": "contracts/TestUSD.sol",
+      "contractName": "TestUSD",
+      "proxyChain": [],
+      "deployment": {
+        "min": 604452,
+        "max": 604452,
+        "avg": 604452,
+        "median": 604452,
+        "count": 18,
+        "runtimeSize": 2178
+      },
+      "functions": {
+        "approve": {
+          "min": 46678,
+          "max": 46678,
+          "avg": 46678,
+          "median": 46678,
+          "count": 34
+        },
+        "balanceOf": {
+          "min": 23980,
+          "max": 23992,
+          "avg": 23992,
+          "median": 23992,
+          "count": 1561
+        },
+        "mint": {
+          "min": 36466,
+          "max": 70666,
+          "avg": 57528,
+          "median": 53566,
+          "count": 69
+        }
+      }
+    }
+  }
+}
