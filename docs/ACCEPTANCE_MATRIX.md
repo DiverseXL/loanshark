@@ -4,7 +4,7 @@ Every requirement maps to an implementation path, a test path, an evidence path 
 
 Status values: `PENDING`, `IN PROGRESS`, `DONE`, `BLOCKED`.
 
-Last updated: Phase 3b (settlement review follow-up), 2026-11-17.
+Last updated: Phase 4 (browser app foundation and read/sign-message wallet layer), 2026-11-17.
 
 | ID | Assertion | Implementation | Test | Evidence | Status |
 |---|---|---|---|---|---|
@@ -22,10 +22,10 @@ Last updated: Phase 3b (settlement review follow-up), 2026-11-17.
 | C5 | Same agreement data gives the same hash across clients; any change alters it | `packages/agreement` (`commitmentOf`, `agreementHashOf`) and `packages/contracts/contracts/LoanSettlement.sol` (`commitmentOf`) | `packages/agreement/test/commitment.test.ts` (all ten fields; five frozen vectors) and `packages/contracts/test/cross-commitment.test.ts` (Solidity equals the TypeScript vectors) | `evidence/phase-03-result.md` | DONE (local Hardhat network, not deployed) |
 | C6 | No disbursement before funding; none twice | `LoanSettlement` `fund`/`claim` state checks and exact transfers | `packages/contracts/test/lifecycle.test.ts` (claim before fund, double fund, double claim), `test/default.test.ts`, `test/mock-tokens.test.ts` | `evidence/phase-03-result.md` | DONE (local Hardhat network, not deployed) |
 | C7 | No over-repayment; closed loans reject payments | `LoanSettlement` `repay` outstanding check and terminal-state checks | `packages/contracts/test/lifecycle.test.ts` (`Overpayment`, zero, Repaid re-payment), `test/default.test.ts` | `evidence/phase-03-result.md` | DONE (local Hardhat network, not deployed) |
-| C8 | Wrong chain is rejected by the app | `apps/web` | e2e | pending | PENDING |
+| C8 | Wrong chain is rejected by the app | `apps/web/src/wallet/chains.ts` (EVM `eth_chainId` must be `0x2648`, native `enable('qorechain-diana')` must resolve; distinct `wrong-chain` states) | `apps/web/test/chains.test.ts` (8 tests, MOCK providers) | `evidence/phase-04-owner-checklist.md` (OWNER-SUPPLIED, every result blank) | PENDING (tests pass; owner browser run not done) |
 | C9 | Native hybrid transaction followed by an EVM transaction under an authorised window | `apps/web`, `packages/chain-client` | e2e on Diana | pending | PENDING (window must be opened in QoreX) |
-| C10 | No key material or plaintext reaches the server | `apps/api` | test plus review | pending | PENDING |
-| C11 | The UI recomputes the commitment from the signed agreement and compares it with the `loanId` and `termsOf()` before enabling fund | `apps/web` (not yet built) | pending (UI e2e) | pending | PENDING |
+| C10 | No key material or plaintext reaches the server | `apps/web/src` (no storage, no transaction call, no key-like material) and `apps/api` (not built) | `apps/web/test/hygiene.test.ts` and `apps/web/test/privacy.test.ts` (12 static checks over source, CSP and README) plus review | `evidence/phase-04-owner-checklist.md` (OWNER-SUPPLIED, every result blank) | PENDING (no server exists; static checks pass; owner browser run not done) |
+| C11 | The UI recomputes the commitment from the signed agreement and compares it with the `loanId` and `termsOf()` before enabling fund | `apps/web` (diagnostics app exists; the fund UI does not) | pending (UI e2e) | pending | PENDING |
 | T3 | A recipient card for a different KEM key is rejected | `packages/qoreseal-adapter` (uses the official `verifyRecipientCard`) | `packages/qoreseal-adapter/test/cards.test.ts` against a MOCKED registry | `evidence/phase-02-result.md` | DONE (offline, throwaway keys, mocked registry; no real chain call) |
 | T5 | Forged sender is rejected: classical-only and wrong-key signatures | `packages/qoreseal-adapter` (`verifySignedEnvelope` via `verifyHybridMessage`) | `packages/qoreseal-adapter/test/signed-envelope.test.ts` ("T5", "T5 and T7") | `evidence/phase-02-result.md` | DONE (offline, throwaway keys, mocked account client) |
 | T6 | A lender cannot forge a request variant for another lender | `packages/qoreseal-adapter` (domain-tagged hash over envelope bytes plus AAD) | `packages/qoreseal-adapter/test/signed-envelope.test.ts` ("T6") | `evidence/phase-02-result.md` | DONE (offline, throwaway keys, mocked account client) |

@@ -47,18 +47,26 @@ rejected for this phase.
    `form-action 'none'`. No analytics, no remote fonts, no third-party script.
    Limitations: a meta tag cannot enforce `frame-ancestors`, so clickjacking
    protection needs a response header at whatever host serves the build; Vite's
-   development server injects the React refresh preamble as an inline script,
-   so the strict policy is verified against the production build, not `dev`. The
-   built `dist/index.html` contains only external `script`/`link` tags
-   (`docs/evidence/phase-04-result.md`).
-5. **Chain guard state is explicit.** Every wallet action is refused unless the
+   development server injects the React refresh preamble as an inline script and
+   CSS through inline style tags. `vite.config.ts` therefore has a
+   `apply: "serve"` plugin that relaxes only `script-src` and `style-src` with
+   `'unsafe-inline'` for `vite`; `vite build` does not run it, so the production
+   policy stays strict. The owner checklist uses `preview`, not `dev`, for the
+   CSP observation. The built `dist/index.html` contains only external
+   `script`/`link` tags (`docs/evidence/phase-04-result.md`).
+5. **Chain guard state is explicit.** Every signing action is refused unless the
    EVM provider answers `eth_chainId` with `0x2648` and the native side accepts
    `enable('qorechain-diana')`. Wrong EVM chain and unaccepted native chain are
    distinct states, and the page shows the state before any signing button.
    ASSUMPTION (source-lock claim 43): QoreX exposes no native chain-id getter in
    either the source or the runtime record, so the native side is inferred from
    `enable` resolving. If a getter is confirmed, the guard should read it and
-   this decision should change.
+   this decision should change. ASSUMPTION (arguments): the adapter source does
+   not document `getKey`, `signArbitrary` or `listAccounts`, and the probe record
+   does not state their parameter lists. The wrapper calls
+   `getKey(chainId)`, `signArbitrary(chainId, address, text)` and
+   `listAccounts(chainId)`, following the Keplr-like native API. If a call fails
+   with an argument error, the page reports it and nothing is retried.
 6. **Signing is serialised and explicit.** QoreX is reported to handle one
    request at a time (claim 44, owner report, not reproduced here), so the
    signer holds a promise queue: a second call waits for the first to settle and
@@ -76,6 +84,44 @@ rejected for this phase.
    `/qorechain/pqc/v1/account/{address}`. A signature that cannot be verified is
    never shown as success; the four negative controls are computed locally on
    the returned object.
+
+## Implementation and verification
+
+The diagnostics app is built; it is not a product UI and is not deployed.
+
+- `apps/web/src/wallet/detect.ts`: EIP-6963 listener registered before the
+  request event, 600 ms collection window, QoreX matched by rdns
+  `network.qore.qorex` or the `isQoreX` flag, plus `window.qorex.native`.
+- `apps/web/src/wallet/chains.ts`: EVM `eth_chainId` must be `0x2648`; native
+  `enable('qorechain-diana')` must resolve. Wrong EVM chain and unaccepted
+  native chain are separate `wrong-chain` states; an unreadable EVM chain is
+  `unavailable`. Nothing is ready unless both lanes pass.
+- `apps/web/src/wallet/connect.ts`: `connectNative(chainId)` returns the bech32
+  `getKey` address and the raw key object for the panel.
+- `apps/web/src/wallet/signer.ts`: `QorexMessageSigner` implements
+  `MessageSigner` from `@loanshark/qoreseal-adapter`, serialises every call
+  through one promise queue, requires an authorisation callback, and returns a
+  typed failure without retrying a refusal. The adapter is a type-only
+  dependency; no adapter code reaches the bundle.
+- `apps/web/src/wallet/signing.ts`: `runSignatureChecks` verifies with
+  `verifyHybridMessage` (post-quantum part mandatory, on-chain key) and runs
+  the four negative controls. `reportStatus` returns `verified` only when the
+  positive check passed and all four controls were refused.
+- `apps/web/src/App.tsx`: the six diagnostics panels, each with a raw JSON
+  toggle, the wallet address and both chain ids above the signing button, and
+  the privacy panel copied from the README table.
+- `apps/web/test`: 37 tests. 5 use the saved real QoreX signature and the
+  saved on-chain ML-DSA-87 key with a fixed in-memory account reader; 17 use
+  MOCK provider objects (8 chain guard, 9 signer); 3 use synthetic verifier
+  results; 12 are static source or README scans. No test opens a socket.
+- `docs/evidence/phase-04-result.md` records the local commands and counts.
+  `docs/evidence/phase-04-owner-checklist.md` is the browser run the owner
+  must perform; every result field there is OWNER-SUPPLIED and blank.
+
+Not built in this phase: any EVM window flow, any transaction, any connection
+to `apps/api` (which does not exist), and any storage or seal-key custody. M5
+is therefore partial and C8/C10 stay PENDING until the owner-run browser
+evidence exists.
 
 ## Consequences
 

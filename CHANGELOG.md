@@ -4,6 +4,28 @@ No release has been made. The project is built one phase at a time and each entr
 
 ## Unreleased
 
+### Phase 4: browser app foundation and QoreX read/sign-message layer
+
+Added:
+
+- `apps/web`: Vite 7.3.8, React 19.3.1 and strict TypeScript 5.9.3, client-side only and pinned exactly. No SSR, no analytics, no remote fonts and no third-party script. A CSP meta tag allows `script-src 'self'` and limits `connect-src` to `api-testnet.qore.host` and `evm-testnet.qore.host`.
+- `apps/web/src/wallet`: EIP-6963 and `window.qorex.native` detection, a two-lane chain guard (`0x2648` and `qorechain-diana`), `connectNative` returning the bech32 address, and `QorexMessageSigner` implementing the existing `MessageSigner` with one promise queue, an explicit authorisation callback and no retry.
+- `apps/web/src/wallet/signing.ts`: local verification with `verifyHybridMessage` (post-quantum part required, on-chain key) plus the four negative controls. Success is shown only when the positive check passes and all four controls are refused.
+- Six diagnostics panels, each with a raw JSON toggle: detection, chain guard, accounts with the ADR-0009 comparison, a read-only account-record fetch that reports CORS, the fixed-message signing flow, and the README privacy claims table copied verbatim.
+- 37 `apps/web` tests: 5 use the saved real QoreX signature and on-chain key (no network), 17 use MOCK providers, 3 use synthetic verifier results and 12 are static source, CSP or README scans. No test opens a socket.
+- ADR-0012 (client-only, thin wrapper, exact pins, CSP, guard, queue, no storage), source-lock claims 36 to 44 refreshed and the adapter HEAD re-resolved, `docs/evidence/phase-04-result.md`, and a blank `docs/evidence/phase-04-owner-checklist.md`.
+
+Changed:
+
+- Root `pnpm test` builds `packages/chain-client` and `packages/qoreseal-adapter` before Vitest so `apps/web` resolves their declared entry points. Root typecheck and build now include `apps/web`; Biome includes `.tsx` so the React source is formatted and linted.
+- Threat model T8 and T14, acceptance matrix C8 and C10 (test references added, both stay PENDING), README milestone M5 (partial) and limitations 21 to 24.
+
+Known in this phase:
+
+- No owner-run browser result exists. Detection, chain reading, accounts, CORS and a fresh signing prompt are unobserved; the owner checklist is blank.
+- No deployment, no transaction, no EVM window and no `signAndBroadcast`. The only signing request is `LOANSHARK test message, no funds`.
+- The native chain ID is inferred from `enable`, not read, and the REST host's CORS policy is unknown.
+
 ### Phase 3b: settlement review follow-up
 
 Added:
