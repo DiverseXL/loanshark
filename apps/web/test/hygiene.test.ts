@@ -60,21 +60,51 @@ describe("storage and key material", () => {
 });
 
 describe("forbidden transaction methods", () => {
+  // eth_sendTransaction is the one exception, and only in the deploy module;
+  // the test below pins that. Everything else stays forbidden everywhere.
   const forbidden: Array<{ pattern: RegExp; label: string }> = [
-    { pattern: /eth_sendTransaction/, label: "eth_sendTransaction" },
     { pattern: /eth_sendRawTransaction/, label: "eth_sendRawTransaction" },
     { pattern: /signAndBroadcast/, label: "signAndBroadcast" },
     { pattern: /eth_requestAccounts/, label: "eth_requestAccounts" },
     { pattern: /eth_signTransaction/, label: "eth_signTransaction" },
     { pattern: /wallet_sendCalls|wallet_signTransaction/, label: "wallet transaction method" },
+    { pattern: /\beth_sign\b|\bpersonal_sign\b|wallet_sign/i, label: "message signing method" },
+    { pattern: /MsgRegisterPQCKey|MsgRegisterKEMKey|MsgRotatePQCKey/i, label: "key-management message" },
   ];
 
-  it("contains no transaction or account-request call", () => {
+  it("contains no raw-transaction, broadcast, account-request or key-management call", () => {
     for (const file of sourceFiles) {
       for (const rule of forbidden) {
         expect(rule.pattern.test(file.text), `${rule.label} in ${file.path}`).toBe(false);
       }
     }
+  });
+
+  it("keeps eth_sendTransaction in the deploy module only, called from a click", () => {
+    const mentions = sourceFiles
+      .filter((file) => /eth_sendTransaction/.test(file.text))
+      .map((file) => file.path);
+    expect(mentions).toEqual([join("src", "deploy", "flow.ts")]);
+
+    const flowFile = sourceFiles.find((file) => file.path === join("src", "deploy", "flow.ts"));
+    // Exactly one request call. The other mentions are status text.
+    const calls = flowFile?.text.match(/provider\.request\(\{\s*method:\s*"eth_sendTransaction"/g) ?? [];
+    expect(calls).toHaveLength(1);
+
+    // The only callers are the four onClick handlers in the panel.
+    const callers = sourceFiles
+      .filter((file) => file.path !== join("src", "deploy", "flow.ts"))
+      .filter((file) => /flow\.runStep\(/.test(file.text))
+      .map((file) => file.path);
+    expect(callers).toEqual([join("src", "deploy", "DeployPanel.tsx")]);
+
+    const panel = sourceFiles.find(
+      (file) => file.path === join("src", "deploy", "DeployPanel.tsx"),
+    );
+    const clickHandlers = panel?.text.match(/onClick=\{\(\) => \{\s*void flow\.runStep\(id\);/g) ?? [];
+    expect(clickHandlers).toHaveLength(1);
+    expect(panel?.text).not.toMatch(/useEffect\([^)]*runStep/s);
+    expect(panel?.text).toContain("void flow.runStep(id);");
   });
 
   it("mentions signArbitrary in exactly two files: the type and the signer", () => {

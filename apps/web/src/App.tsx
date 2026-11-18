@@ -30,6 +30,7 @@ import { evaluateChainGuard, readChains } from "./wallet/chains.js";
 import type { NativeConnection } from "./wallet/connect.js";
 import { connectNative } from "./wallet/connect.js";
 import { detectQorex } from "./wallet/detect.js";
+import { DeployPanel } from "./deploy/DeployPanel.js";
 import { QorexMessageSigner } from "./wallet/signer.js";
 import type { SignatureReport } from "./wallet/signing.js";
 import { runSignatureChecks } from "./wallet/signing.js";
@@ -102,6 +103,7 @@ export function App() {
   const [recordBusy, setRecordBusy] = useState(false);
   const [signState, setSignState] = useState<SignState>({ status: "idle" });
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showDeployPanel, setShowDeployPanel] = useState(false);
 
   const address = connection?.address ?? null;
 
@@ -198,6 +200,7 @@ export function App() {
   }, [detection]);
 
   const evmAccount = evmAccounts?.[0] ?? null;
+  const deployProvider = detection?.qorexEvm?.provider ?? null;
   const addressMatch =
     evmAccount === null
       ? "not-compared"
@@ -289,14 +292,15 @@ export function App() {
   return (
     <>
       <div className="testnet-banner">
-        TESTNET ONLY - QoreChain Diana - no funds move from this page
+        TESTNET ONLY - QoreChain Diana - test tokens only, no monetary value
       </div>
       <div className="page">
         <h1>LOANSHARK diagnostics</h1>
         <p className="muted">
-          Browser-only technical validation surface. No transaction is sent. The only signing
-          request is the fixed message <code>{TEST_MESSAGE}</code>, and only after a button press.
-          Testnet only: Diana.
+          Browser-only technical validation surface. The only signing request is the fixed message{" "}
+          <code>{TEST_MESSAGE}</code>, and only after a button press. No transaction is sent unless
+          the owner opens the testnet deployment panel and clicks a deployment button. Testnet only:
+          Diana.
         </p>
         <div className="row">
           <button type="button" onClick={() => setRefreshKey((value) => value + 1)}>
@@ -735,11 +739,40 @@ export function App() {
           <p>{NO_ZK_CLAIM}</p>
         </Panel>
 
+        <section className="panel" aria-labelledby="deploy-heading">
+          <div className="panel-head">
+            <h2 id="deploy-heading">7. Testnet deployment (owner-run)</h2>
+            <span className="badge bad">OWNER-RUN</span>
+          </div>
+          <div className="notice bad-notice">
+            <strong>TESTNET DEPLOYMENT WARNING.</strong> The panel behind this warning can ask your
+            wallet to send real transactions on QoreChain Diana. The assistant sends nothing and
+            signs nothing. Every send happens only inside a click handler for a button labelled with
+            exactly what it does, after the chain guard passes. Test tokens only; no monetary value.
+            If the lane check is rejected, stop and read the exact error before doing anything else.
+          </div>
+          {!showDeployPanel ? (
+            <div className="row">
+              <button type="button" onClick={() => setShowDeployPanel(true)}>
+                I understand the warning: open the testnet deployment panel
+              </button>
+            </div>
+          ) : deployProvider === null ? (
+            <p className="notice bad-notice">
+              No QoreX EVM provider was found over EIP-6963, so the deployment panel cannot run. No
+              transaction was sent.
+            </p>
+          ) : (
+            <DeployPanel provider={deployProvider} guard={guardNow} />
+          )}
+        </section>
+
         <footer>
           <p>
-            Diana testnet only. No deployment and no transaction is broadcast. The page reads{" "}
-            <code>{REST_HOST}</code> and uses the EVM provider at <code>{EVM_RPC_HOST}</code>{" "}
-            without sending a transaction. No recovery material is requested or stored.
+            Diana testnet only. The repository and the assistant deploy nothing. The optional
+            testnet deployment panel sends only after the owner clicks a button, and only with test
+            tokens. The page reads <code>{REST_HOST}</code> and uses the EVM provider at{" "}
+            <code>{EVM_RPC_HOST}</code>. No recovery material is requested or stored.
           </p>
         </footer>
       </div>

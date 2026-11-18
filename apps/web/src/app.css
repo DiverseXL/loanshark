@@ -167,6 +167,13 @@ pre {
   margin: 8px 0 12px;
 }
 
+.deploy-step {
+  border: 1px solid #8a8a8a;
+  border-radius: 5px;
+  padding: 8px 12px;
+  margin: 12px 0;
+}
+
 .raw {
   margin-top: 12px;
   border-top: 1px dashed #9a9a9a;
