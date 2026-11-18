@@ -4,6 +4,30 @@ No release has been made. The project is built one phase at a time and each entr
 
 ## Unreleased
 
+### Step 6b: deployment readiness for Diana
+
+Added:
+
+- ADR-0013 is Accepted: Option A, allowlist `TestUSD` and the fest fUSD at `0x97143B771D34ddb9130b807b135Ae675A5a963CA`.
+- `LoanSettlement` now takes two constructor addresses (`testUsd_`, `fusd_`) in that order, rejects zero or duplicate addresses, keeps the allowlist immutable, and has no admin or upgrade path.
+- `MockFusdProfile`: a test-only 6-decimal mock with the recorded fUSD metadata profile, named `Mock Fest USD` (`mFUSD`) so it cannot be mistaken for the real token.
+- Five local Hardhat tests: exact allowlist and order, zero/duplicate constructor rejection, a full lifecycle in `TestUSD`, a full lifecycle in the mock fUSD profile, and rejection of a token outside the allowlist. Hardhat total: 38 tests.
+- `scripts/build-manifest.mjs` and `docs/deployments/manifest.json`: ABI, creation and runtime bytecode SHA-256, compiler settings, constructor shape and source commit. Two builds produced the same manifest SHA-256.
+- `apps/web` deploy panel behind a visible testnet warning: chain guard first, `eth_estimateGas` shown, one click-triggered send per step, receipt polling with visible pending, confirmed, reverted and timeout states, exact raw errors and a copyable evidence JSON block. No key input and no storage.
+- `scripts/verify-deployment.mjs`: read-only `eth_chainId`, `eth_getCode` and `eth_call` checks for bytecode hashes, `allowedTokens()`, `MINIMUM_CLAIM_WINDOW`, TestUSD metadata and owner balances. It reports a metadata-only mismatch explicitly and never sends a transaction.
+- `docs/evidence/phase-06-owner-checklist.md`, a blank `phase-06-owner-deploy.md`, a placeholder `phase-06-verify.md`, and `phase-06-result.md` with measured counts and hashes.
+- Threat-model rows T20 to T25 and acceptance-matrix C12 (PENDING).
+
+Changed:
+
+- `apps/web` tests: 50 total, including 12 MOCK-provider deploy tests. The hygiene test now allows `eth_sendTransaction` only in the deploy module and only from the click handler, and keeps raw transactions, broadcasts, key-management messages and signing methods forbidden elsewhere.
+- README milestone M4, known limitations, repository structure and source-lock deployment references (explorer and faucet, docs only).
+- ADR-0011 records the reproducible manifest and verifier.
+
+Not done:
+
+- No deployment. No transaction was sent or signed by the assistant. C12 stays PENDING until the owner supplies the checklist, the JSON block and the verifier report.
+
 ### Step 6a: rules recorded, repository prepared for publication, submission documents
 
 Added:

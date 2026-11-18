@@ -8,6 +8,7 @@
     "explorer": "https://explore.qore.network"
   },
   "sourceCommit": "457936d620ec17136254dab812a720d6afd0b673",
+  "sourceCommitNote": "Last commit that touched packages/contracts/contracts or hardhat.config.ts; the dirty flag covers the same paths only.",
   "workingTreeDirty": false,
   "compiler": {
     "version": "0.8.34",

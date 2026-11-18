@@ -202,7 +202,10 @@ export function DeployPanel({ provider, guard }: DeployPanelProps) {
         SHA-256 <code>{manifest.contracts.LoanSettlement.runtimeBytecodeSha256}</code>.
       </p>
 
-      {stepBlock("lane", <p className="muted">Value: 0. Recipient: the connected account above.</p>)}
+      {stepBlock(
+        "lane",
+        <p className="muted">Value: 0. Recipient: the connected account above.</p>,
+      )}
 
       {stepBlock(
         "testusd",

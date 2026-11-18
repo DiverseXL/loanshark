@@ -47,6 +47,7 @@ const settlement = readArg("--settlement");
 const owner = readArg("--owner");
 const rpc = readArg("--rpc", "https://evm-testnet.qore.host");
 const outPath = readArg("--out", join(repoRoot, "docs", "evidence", "phase-06-verify.md"));
+const note = readArg("--note", null);
 
 if (!isAddress(testUsd) || !isAddress(settlement) || !isAddress(owner)) {
   console.error(
@@ -74,7 +75,8 @@ const call = async (method, params) => {
     parsed = null;
   }
   raw.push({ request, httpStatus: response.status, responseText: text });
-  if (parsed === null) throw new Error(`${method}: HTTP ${response.status}, body is not JSON: ${text}`);
+  if (parsed === null)
+    throw new Error(`${method}: HTTP ${response.status}, body is not JSON: ${text}`);
   if (parsed.error !== undefined) {
     throw new Error(`${method}: JSON-RPC error ${JSON.stringify(parsed.error)}`);
   }
@@ -152,7 +154,11 @@ const main = async () => {
     const buffer = hexToBuffer(code);
     const actual = sha256(buffer);
     if (actual === expected) {
-      record(`${label} runtime bytecode`, true, `eth_getCode SHA-256 ${actual} equals the manifest.`);
+      record(
+        `${label} runtime bytecode`,
+        true,
+        `eth_getCode SHA-256 ${actual} equals the manifest.`,
+      );
       bytecodeResults.push({ label, address, actual, expected, exact: true, metadataOnly: false });
       continue;
     }
@@ -293,6 +299,7 @@ const main = async () => {
     "",
     `Run at ${new Date().toISOString()}.`,
     "",
+    ...(note === null ? [] : [`Note supplied by the caller: ${note}`, ""]),
     "This file was written by `scripts/verify-deployment.mjs`. The script performs only `eth_chainId`, `eth_getCode` and `eth_call`. It has no transaction path and never requested a key. A filled file is OWNER-SUPPLIED evidence: the assistant did not run it against a deployment.",
     "",
     `- RPC: \`${rpc}\``,

@@ -376,7 +376,11 @@ export function createDeployFlow(options: DeployFlowOptions): DeployFlow {
         }
       }
     } catch (error) {
-      patchStep(id, { status: "failed", error: rawError(error), note: "Transaction data was not built." });
+      patchStep(id, {
+        status: "failed",
+        error: rawError(error),
+        note: "Transaction data was not built.",
+      });
       return;
     }
 
@@ -415,7 +419,10 @@ export function createDeployFlow(options: DeployFlowOptions): DeployFlow {
       return;
     }
     const gasText = typeof gas === "string" ? gas : JSON.stringify(gas);
-    patchStep(id, { estimateGas: gasText, note: "Estimate returned; requesting eth_sendTransaction." });
+    patchStep(id, {
+      estimateGas: gasText,
+      note: "Estimate returned; requesting eth_sendTransaction.",
+    });
 
     let hash: unknown;
     try {

@@ -1,7 +1,8 @@
 # ADR-0011: Contract toolchain and compiler settings
 
-Status: Accepted for local-only development. No deployment is part of this
-decision.
+Status: Accepted for local-only development and for a reproducible deployment
+manifest (Step 6b). No deployment is part of this decision; the owner performs
+every deployment.
 
 ## Node.js support check (Task 4 gate)
 
@@ -92,6 +93,43 @@ have whole-second resolution and the comparison includes request latency).
 Diana's exact timestamp rule and any future drift are not confirmed; deadlines
 must be treated as approximate. Raw samples are in
 `docs/evidence/phase-03b-block-time.json`.
+
+## Reproducible manifest (Step 6b)
+
+`scripts/build-manifest.mjs` reads the Hardhat artifacts and writes
+`docs/deployments/manifest.json`. It refuses to write if the compiler is not
+0.8.34, the EVM target is not `osaka`, or the optimizer is not enabled at 200
+runs. The manifest contains, for `TestUSD` and `LoanSettlement`: the ABI, the
+creation bytecode and its SHA-256, the runtime bytecode and its SHA-256, the
+compiler settings, the constructor signature and argument sources, and the
+source commit. It contains no private data and no timestamp, so two builds are
+byte-identical.
+
+Hash input: the raw bytecode bytes decoded from the hex string; the `0x` prefix
+and hex encoding are excluded. The deploy panel sends the manifest's creation
+bytecode unchanged and appends standard ABI words for the constructor.
+
+The double build on 2026-11-18 produced the same file SHA-256 both times:
+`0x8b648699d3144aae5c9504b8119358702eaf556ead2dd085a28adcdf6258e1a1`.
+`sourceCommit` is the last commit that touched the compiler inputs
+(`packages/contracts/contracts` and `hardhat.config.ts`), and the dirty flag
+covers only those paths, so later documentation commits do not change the
+manifest.
+Contract hashes are recorded in `docs/evidence/phase-06-result.md`.
+
+`scripts/verify-deployment.mjs` is the read-only post-deployment check. It
+calls only `eth_chainId`, `eth_getCode` and `eth_call`. It hashes the runtime
+code and compares it with the manifest. A mismatch is reported, not hidden: if
+the code before the trailing CBOR metadata is identical and only the metadata
+trailer differs, the report says `MISMATCH, METADATA ONLY` and gives both
+metadata lengths; any other difference is reported as a mismatch beyond
+metadata. It also checks `allowedTokens()`, `MINIMUM_CLAIM_WINDOW`, the TestUSD
+metadata and the owner balances.
+
+ASSUMPTION: the deployment uses exactly the bytecode in this manifest. If the
+owner compiles again with different settings, the manifest must be rebuilt
+first, and the verification will report the resulting hash mismatch rather than
+accept it.
 
 ## Test runner and network
 

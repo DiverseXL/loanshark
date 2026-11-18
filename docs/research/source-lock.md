@@ -1,6 +1,6 @@
 # Source lock
 
-Every external technical claim, where it came from, and how it was confirmed. "Runtime" means observed on a running system. "Source" means read in a repository at the named commit. "Docs only" means stated but not yet checked against a running system. Last updated 2026-11-17.
+Every external technical claim, where it came from, and how it was confirmed. "Runtime" means observed on a running system. "Source" means read in a repository at the named commit. "Docs only" means stated but not yet checked against a running system. Last updated 2026-11-18.
 
 | # | Claim | Source | Confirmed by |
 |---|---|---|---|
@@ -60,6 +60,12 @@ Every external technical claim, where it came from, and how it was confirmed. "R
 | 54 | The explorer is <https://explore.qore.network>. The start page states the chain id `qorechain-diana`, the EVM chain id 9800, and the endpoints `https://rpc-testnet.qore.host`, `https://api-testnet.qore.host` and `https://evm-testnet.qore.host`. | <https://build.qorechain.io/start> | Docs only, fetched 2026-11-17. Consistent with claims 1 to 4, which confirm the chain ID and endpoints at runtime. |
 | 55 | The Q-Day Drill runs on 18 November 2026, 00:00 to 23:59 UTC. Registration closes on 17 November 2026 at 23:59 UTC and requires a testnet account the project uses, with its ML-DSA-87 key registered, together with that account's ECDSA private key and up to five contract addresses. The key goes to the attacker bot and is published after the drill. The team must also make a normal transaction from the account during the drill and submit its hash by 19 November. | <https://build.qorechain.io/rules>; <https://build.qorechain.io/start>; <https://build.qorechain.io/prizes> | Docs only, fetched 2026-11-17. This project has not registered for the drill: entry requires handing a classical private key to the organiser, the ML-KEM/contract path is BLOCKED and nothing is deployed. No key material was requested or handled. |
 | 56 | Prizes total $20,000 across six category bounties and six special awards. The rules, prizes and dates are stated on the site as not final and may change until the end of the event. | <https://build.qorechain.io/prizes>; <https://build.qorechain.io/rules> | Docs only, fetched 2026-11-17. |
+
+## Deployment references for Step 6b
+
+- Explorer: `https://explore.qore.network` (claim 54, from the organiser's start page). Docs only. This project has not loaded it in a browser and does not call it from code. It is the link the owner uses in `docs/evidence/phase-06-owner-checklist.md` to check transaction hashes and addresses.
+- Faucet: `https://dashboard.qorechain.io/faucet` (claim 53, from the organiser's start page). Docs only. It is stated to give test QOR for fees and fUSD, fETH and fBTC once every 24 hours. This project has not used it, has not loaded it and makes no claim about its current availability.
+- EVM JSON-RPC used by the read-only verifier: `https://evm-testnet.qore.host` (claim 4, confirmed at runtime for reads on 2026-11-16 and 2026-11-17). No transaction has been sent to it by this project.
 
 ## Commit resolution for Phase 4
 

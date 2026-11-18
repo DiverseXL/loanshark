@@ -64,3 +64,19 @@ transfer from their own wallet before the demo if they want that confirmed.
 Still required after the decision, and not performed in Step 6b: the live
 deployment and the live read-only `balanceOf`/`allowance` checks. Both are in
 `docs/evidence/phase-06-owner-checklist.md` and are OWNER-SUPPLIED.
+
+## Verification in Step 6b
+
+- Five local Hardhat tests cover the two-token constructor: exact allowlist and
+  order, rejection of a zero or duplicate address, a full lifecycle in
+  `TestUSD`, a full lifecycle in the MOCK fUSD-profile token, and rejection of a
+  token outside the allowlist. The mock is `MockFusdProfile`, name
+  `Mock Fest USD`, symbol `mFUSD`, 6 decimals; it is not the real fUSD.
+- The deploy panel builds the LoanSettlement constructor data as
+  `abi.encode(TestUSD address, 0x97143B771D34ddb9130b807b135Ae675A5a963CA)`,
+  with the TestUSD address taken from the confirmed deployment receipt.
+- `scripts/verify-deployment.mjs` checks `allowedTokens()` equals the two
+  addresses in that order after deployment.
+- No local or live test proves that the real fUSD transfers, approves or
+  reports balances as a standard ERC-20. That remains the owner-accepted risk
+  above.

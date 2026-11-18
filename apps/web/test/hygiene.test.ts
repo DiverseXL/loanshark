@@ -69,7 +69,10 @@ describe("forbidden transaction methods", () => {
     { pattern: /eth_signTransaction/, label: "eth_signTransaction" },
     { pattern: /wallet_sendCalls|wallet_signTransaction/, label: "wallet transaction method" },
     { pattern: /\beth_sign\b|\bpersonal_sign\b|wallet_sign/i, label: "message signing method" },
-    { pattern: /MsgRegisterPQCKey|MsgRegisterKEMKey|MsgRotatePQCKey/i, label: "key-management message" },
+    {
+      pattern: /MsgRegisterPQCKey|MsgRegisterKEMKey|MsgRotatePQCKey/i,
+      label: "key-management message",
+    },
   ];
 
   it("contains no raw-transaction, broadcast, account-request or key-management call", () => {
@@ -88,7 +91,8 @@ describe("forbidden transaction methods", () => {
 
     const flowFile = sourceFiles.find((file) => file.path === join("src", "deploy", "flow.ts"));
     // Exactly one request call. The other mentions are status text.
-    const calls = flowFile?.text.match(/provider\.request\(\{\s*method:\s*"eth_sendTransaction"/g) ?? [];
+    const calls =
+      flowFile?.text.match(/provider\.request\(\{\s*method:\s*"eth_sendTransaction"/g) ?? [];
     expect(calls).toHaveLength(1);
 
     // The only callers are the four onClick handlers in the panel.
@@ -101,7 +105,8 @@ describe("forbidden transaction methods", () => {
     const panel = sourceFiles.find(
       (file) => file.path === join("src", "deploy", "DeployPanel.tsx"),
     );
-    const clickHandlers = panel?.text.match(/onClick=\{\(\) => \{\s*void flow\.runStep\(id\);/g) ?? [];
+    const clickHandlers =
+      panel?.text.match(/onClick=\{\(\) => \{\s*void flow\.runStep\(id\);/g) ?? [];
     expect(clickHandlers).toHaveLength(1);
     expect(panel?.text).not.toMatch(/useEffect\([^)]*runStep/s);
     expect(panel?.text).toContain("void flow.runStep(id);");

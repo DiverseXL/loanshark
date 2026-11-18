@@ -24,18 +24,17 @@ const readJson = (path) => JSON.parse(readFileSync(path, "utf8"));
 
 const sha256OfHex = (hex) => {
   if (!/^0x[0-9a-fA-F]*$/.test(hex)) throw new Error(`Not a hex string: ${hex.slice(0, 16)}...`);
-  return `0x${createHash("sha256").update(Buffer.from(hex.slice(2), "hex")).digest("hex")}`;
+  return `0x${createHash("sha256")
+    .update(Buffer.from(hex.slice(2), "hex"))
+    .digest("hex")}`;
 };
 
-const git = (args) =>
-  execFileSync("git", args, { cwd: repoRoot, encoding: "utf8" }).trim();
+const git = (args) => execFileSync("git", args, { cwd: repoRoot, encoding: "utf8" }).trim();
 
 const contractArtifact = (sourceFile, contractName) => {
   const path = join(artifactsRoot, "contracts", sourceFile, `${contractName}.json`);
   const artifact = readJson(path);
-  const buildInfo = readJson(
-    join(artifactsRoot, "build-info", `${artifact.buildInfoId}.json`),
-  );
+  const buildInfo = readJson(join(artifactsRoot, "build-info", `${artifact.buildInfoId}.json`));
   const output = buildInfo.input.settings;
   return {
     artifact,
@@ -67,8 +66,12 @@ if (settlement.artifact.bytecode === "0x" || settlement.artifact.deployedBytecod
   throw new Error("LoanSettlement artifact has no bytecode; compile first.");
 }
 
+// The commit and dirty flag refer to the compiler inputs only, so later
+// documentation commits do not change the manifest.
+const compilerInputs = ["packages/contracts/contracts", "packages/contracts/hardhat.config.ts"];
+const sourceCommit = git(["log", "-1", "--format=%H", "--", ...compilerInputs]);
 const workingTreeDirty =
-  git(["status", "--porcelain", "--untracked-files=no"]).length > 0;
+  git(["status", "--porcelain", "--untracked-files=no", "--", ...compilerInputs]).length > 0;
 
 const manifest = {
   format: "loanshark-deployment-manifest-v1",
@@ -79,7 +82,9 @@ const manifest = {
     evmRpc: "https://evm-testnet.qore.host",
     explorer: "https://explore.qore.network",
   },
-  sourceCommit: git(["rev-parse", "HEAD"]),
+  sourceCommit,
+  sourceCommitNote:
+    "Last commit that touched packages/contracts/contracts or hardhat.config.ts; the dirty flag covers the same paths only.",
   workingTreeDirty,
   compiler: testUsd.compiler,
   hashInput:
@@ -114,7 +119,8 @@ const manifest = {
           {
             name: "initialOwner",
             type: "address",
-            source: "The connected EVM account, read from eth_accounts immediately before the click.",
+            source:
+              "The connected EVM account, read from eth_accounts immediately before the click.",
           },
         ],
         encoding: "abi.encode(address initialOwner)",

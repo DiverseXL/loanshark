@@ -44,10 +44,7 @@ export async function deployWorld(net: NetworkConnection): Promise<World> {
   const token = await net.viem.deployContract("TestUSD", [owner.account.address]);
   const token18 = await net.viem.deployContract("MockDecimals18");
   const fusd = await net.viem.deployContract("MockFusdProfile");
-  const settlement = await net.viem.deployContract("LoanSettlement", [
-    token.address,
-    fusd.address,
-  ]);
+  const settlement = await net.viem.deployContract("LoanSettlement", [token.address, fusd.address]);
 
   // Fund the participants. This is a test fixture, not part of the product.
   await token.write.mint([borrower.account.address, 10_000n * ONE_USD]);

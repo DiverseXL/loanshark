@@ -14,10 +14,13 @@ describe("LoanSettlement two-token allowlist (ADR-0013 Option A)", async functio
 
   it("allows exactly the two constructor addresses, in order", async function () {
     const world = await deployWorld(net);
-    const allowed = (await world.settlement.read.allowedTokens()).map((entry) =>
+    const allowed = (await world.settlement.read.allowedTokens()).map((entry: string) =>
       entry.toLowerCase(),
     );
-    assert.deepEqual(allowed, [world.token.address.toLowerCase(), world.fusd.address.toLowerCase()]);
+    assert.deepEqual(allowed, [
+      world.token.address.toLowerCase(),
+      world.fusd.address.toLowerCase(),
+    ]);
     assert.equal(await world.settlement.read.isAllowedToken([world.token.address]), true);
     assert.equal(await world.settlement.read.isAllowedToken([world.fusd.address]), true);
     assert.equal(await world.settlement.read.isAllowedToken([world.token18.address]), false);

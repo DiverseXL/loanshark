@@ -5,12 +5,7 @@
 // is a failure.
 
 import { describe, expect, it } from "vitest";
-import {
-  canRunStep,
-  createDeployFlow,
-  evidenceJson,
-  rawError,
-} from "../src/deploy/flow.js";
+import { canRunStep, createDeployFlow, evidenceJson, rawError } from "../src/deploy/flow.js";
 import {
   addressFromWord,
   encodeAddress,
@@ -81,11 +76,11 @@ const makeProvider = (
 ): MockProvider => {
   let sendIndex = 0;
   return new MockProvider({
-    "eth_accounts": () => [ACCOUNT],
-    "eth_estimateGas": () => "0x5208",
-    "eth_sendTransaction": () => sendHashes[sendIndex++] ?? HASH_A,
-    "eth_getTransactionReceipt": () => receipts.shift() ?? null,
-    "eth_call": () => `0x${"0".repeat(24)}${ACCOUNT.slice(2)}`,
+    eth_accounts: () => [ACCOUNT],
+    eth_estimateGas: () => "0x5208",
+    eth_sendTransaction: () => sendHashes[sendIndex++] ?? HASH_A,
+    eth_getTransactionReceipt: () => receipts.shift() ?? null,
+    eth_call: () => `0x${"0".repeat(24)}${ACCOUNT.slice(2)}`,
   });
 };
 
@@ -93,9 +88,7 @@ const noSleep = async (): Promise<void> => {};
 
 describe("transaction data encoding", () => {
   it("encodes addresses and uint256 as 32-byte words", () => {
-    expect(encodeAddress("0x0000000000000000000000000000000000000001")).toBe(
-      `${"0".repeat(63)}1`,
-    );
+    expect(encodeAddress("0x0000000000000000000000000000000000000001")).toBe(`${"0".repeat(63)}1`);
     expect(encodeAddress(ACCOUNT)).toBe(`${"0".repeat(24)}${ACCOUNT.slice(2)}`);
     expect(encodeUint256(0n)).toBe("0".repeat(64));
     expect(encodeUint256(255n)).toBe(`${"0".repeat(62)}ff`);
@@ -137,7 +130,12 @@ describe("transaction data encoding", () => {
 describe("deploy flow with a MOCK provider", () => {
   it("sends nothing without a call, even after a read-only refresh", async () => {
     const provider = makeProvider([]);
-    const flow = createDeployFlow({ provider, guard: readyGuard, pollIntervalMs: 0, sleep: noSleep });
+    const flow = createDeployFlow({
+      provider,
+      guard: readyGuard,
+      pollIntervalMs: 0,
+      sleep: noSleep,
+    });
     expect(provider.calls).toEqual([]);
 
     await flow.refresh();
@@ -149,7 +147,12 @@ describe("deploy flow with a MOCK provider", () => {
 
   it("blocks every send on the wrong chain, before estimate or send", async () => {
     const provider = makeProvider([]);
-    const flow = createDeployFlow({ provider, guard: wrongGuard, pollIntervalMs: 0, sleep: noSleep });
+    const flow = createDeployFlow({
+      provider,
+      guard: wrongGuard,
+      pollIntervalMs: 0,
+      sleep: noSleep,
+    });
 
     await flow.runStep("lane");
 
@@ -162,9 +165,9 @@ describe("deploy flow with a MOCK provider", () => {
   it("shows the exact rejection and does not retry it", async () => {
     let sends = 0;
     const provider = new MockProvider({
-      "eth_accounts": () => [ACCOUNT],
-      "eth_estimateGas": () => "0x5208",
-      "eth_sendTransaction": () => {
+      eth_accounts: () => [ACCOUNT],
+      eth_estimateGas: () => "0x5208",
+      eth_sendTransaction: () => {
         sends += 1;
         throw {
           code: 4001,
@@ -173,7 +176,12 @@ describe("deploy flow with a MOCK provider", () => {
         };
       },
     });
-    const flow = createDeployFlow({ provider, guard: readyGuard, pollIntervalMs: 0, sleep: noSleep });
+    const flow = createDeployFlow({
+      provider,
+      guard: readyGuard,
+      pollIntervalMs: 0,
+      sleep: noSleep,
+    });
 
     await flow.runStep("lane");
 
@@ -189,7 +197,12 @@ describe("deploy flow with a MOCK provider", () => {
 
   it("shows a reverted receipt as failed and keeps the next step disabled", async () => {
     const provider = makeProvider([{ status: "0x0", blockNumber: "0x20", contractAddress: null }]);
-    const flow = createDeployFlow({ provider, guard: readyGuard, pollIntervalMs: 0, sleep: noSleep });
+    const flow = createDeployFlow({
+      provider,
+      guard: readyGuard,
+      pollIntervalMs: 0,
+      sleep: noSleep,
+    });
 
     await flow.runStep("lane");
 
@@ -224,7 +237,12 @@ describe("deploy flow with a MOCK provider", () => {
 
   it("unlocks the next step only after a confirmed receipt", async () => {
     const provider = makeProvider([{ status: "0x1", blockNumber: "0x21", contractAddress: null }]);
-    const flow = createDeployFlow({ provider, guard: readyGuard, pollIntervalMs: 0, sleep: noSleep });
+    const flow = createDeployFlow({
+      provider,
+      guard: readyGuard,
+      pollIntervalMs: 0,
+      sleep: noSleep,
+    });
 
     await flow.runStep("lane");
     expect(flow.getState().steps.lane.status).toBe("confirmed");
@@ -246,7 +264,12 @@ describe("deploy flow with a MOCK provider", () => {
       ],
       [HASH_A, HASH_B, HASH_C, HASH_D],
     );
-    const flow = createDeployFlow({ provider, guard: readyGuard, pollIntervalMs: 0, sleep: noSleep });
+    const flow = createDeployFlow({
+      provider,
+      guard: readyGuard,
+      pollIntervalMs: 0,
+      sleep: noSleep,
+    });
 
     await flow.runStep("lane");
     await flow.runStep("testusd");
