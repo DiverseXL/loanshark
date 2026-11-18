@@ -1,0 +1,13 @@
+# gitleaks 8.30.1 configuration.
+#
+# The default rules are kept. The only allowlist entry is the official QoreSeal
+# vector fixture: it is public test data whose field names (for example
+# mlkemSecretKeySha3 and sharedSecret) match the generic-api-key heuristic.
+# Nothing else is exempt. A real credential anywhere else still fails the scan.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Official public QoreSeal test vectors, not credentials."
+paths = ['''fixtures/qoreseal-vectors-v1\.json''']
