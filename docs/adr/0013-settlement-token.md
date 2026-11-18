@@ -1,6 +1,9 @@
 # ADR-0013: Settlement token allowlist for the submission
 
-Status: Proposed. The owner has not decided. No contract has been changed.
+Status: Accepted, 2026-11-18. The owner chose Option A: allowlist the project's
+`TestUSD` and the fest `fUSD` at `0x97143B771D34ddb9130b807b135Ae675A5a963CA`.
+The contract constructor changed to two token arguments in Step 6b. Nothing has
+been deployed; the deployment is owner-run.
 
 Context: `LoanSettlement` takes an immutable list of allowed tokens in its constructor (`address[] allowedTokens_`, `packages/contracts/contracts/LoanSettlement.sol` line 102). Whatever is allowlisted at deployment cannot be changed later without deploying again. The demo therefore needs the token decision before the deployment, not after it.
 
@@ -36,6 +39,28 @@ Consequences:
 
 ## Decision
 
-Not made. The owner decides after weighing the reproducibility gain in Option A against the unverified third-party token risk. ASSUMPTION if Option A is chosen: fUSD behaves as a standard ERC-20 for transfers and approvals; that must be tested with a real fUSD transfer from the owner's wallet before the demo.
+Option A, chosen by the owner on 2026-11-18: `LoanSettlement` is deployed with
+exactly two allowed tokens, `TestUSD` (deployed first in the same session) and
+the fest `fUSD` at `0x97143B771D34ddb9130b807b135Ae675A5a963CA`. The allowlist
+stays immutable, with no admin and no upgrade path.
 
-Test required after the decision: a settlement test in the chosen token on the local Hardhat network (both options), and, for Option A, one live read-only `balanceOf`/`allowance` check against fUSD plus any owner-run transfer the owner chooses to make in their own wallet.
+Implementation in Step 6b:
+
+- The constructor is now `constructor(address testUsd_, address fusd_)`. It
+  rejects a zero address, a duplicate and the same address twice with
+  `InvalidAddress`. There is no array argument and no mutator.
+- A lifecycle test completes in `TestUSD` and a second lifecycle test completes
+  in a MOCK 6-decimal token labelled with the fUSD profile
+  (`MockFusdProfile`). The mock exists because the real fUSD is not touched or
+  exercised locally; no local test proves anything about the real fUSD contract.
+- A test asserts that a token outside the allowlist is rejected at
+  `proposeLoan`.
+
+ASSUMPTION (owner accepted the risk in ADR-0013): the real fUSD behaves as a
+standard ERC-20 for `transfer`, `transferFrom`, `approve` and `balanceOf`. This
+has not been tested by this project. The owner should make one small fUSD
+transfer from their own wallet before the demo if they want that confirmed.
+
+Still required after the decision, and not performed in Step 6b: the live
+deployment and the live read-only `balanceOf`/`allowance` checks. Both are in
+`docs/evidence/phase-06-owner-checklist.md` and are OWNER-SUPPLIED.
