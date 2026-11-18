@@ -24,10 +24,15 @@ export interface World {
   otherLender: Awaited<ReturnType<NetworkConnection["viem"]["getWalletClients"]>>[number];
   token: Awaited<ReturnType<NetworkConnection["viem"]["deployContract"]>>;
   token18: Awaited<ReturnType<NetworkConnection["viem"]["deployContract"]>>;
+  fusd: Awaited<ReturnType<NetworkConnection["viem"]["deployContract"]>>;
   settlement: Awaited<ReturnType<NetworkConnection["viem"]["deployContract"]>>;
 }
 
-/** Deploys the labelled 6-decimal token, an 18-decimal mock token and the settlement contract. */
+/**
+ * Deploys the labelled 6-decimal token, an 18-decimal mock token, the MOCK
+ * fUSD-profile token and the settlement contract allowlisting TestUSD and the
+ * mock fUSD only (ADR-0013 Option A).
+ */
 export async function deployWorld(net: NetworkConnection): Promise<World> {
   const clients = await net.viem.getWalletClients();
   const owner = clients[0]!;
@@ -38,8 +43,10 @@ export async function deployWorld(net: NetworkConnection): Promise<World> {
 
   const token = await net.viem.deployContract("TestUSD", [owner.account.address]);
   const token18 = await net.viem.deployContract("MockDecimals18");
+  const fusd = await net.viem.deployContract("MockFusdProfile");
   const settlement = await net.viem.deployContract("LoanSettlement", [
-    [token.address, token18.address],
+    token.address,
+    fusd.address,
   ]);
 
   // Fund the participants. This is a test fixture, not part of the product.
@@ -49,15 +56,38 @@ export async function deployWorld(net: NetworkConnection): Promise<World> {
   await token.write.mint([outsider.account.address, 10_000n * ONE_USD]);
   await token18.write.mint([borrower.account.address, 10_000n * 10n ** 18n]);
   await token18.write.mint([lender.account.address, 10_000n * 10n ** 18n]);
+  await fusd.write.mint([borrower.account.address, 10_000n * ONE_USD]);
+  await fusd.write.mint([lender.account.address, 10_000n * ONE_USD]);
 
   // Standing allowances for the test fixture. The contract pulls principal and
   // repayments with transferFrom, so the payer must approve it first.
   for (const wallet of [borrower, lender]) {
     await token.write.approve([settlement.address, maxUint256], { account: wallet.account });
     await token18.write.approve([settlement.address, maxUint256], { account: wallet.account });
+    await fusd.write.approve([settlement.address, maxUint256], { account: wallet.account });
   }
 
-  return { net, owner, borrower, lender, outsider, otherLender, token, token18, settlement };
+  return {
+    net,
+    owner,
+    borrower,
+    lender,
+    outsider,
+    otherLender,
+    token,
+    token18,
+    fusd,
+    settlement,
+  };
+}
+
+/** Deploys a settlement that allows `token` plus a separate 18-decimal mock. */
+export async function deploySettlementFor(
+  net: NetworkConnection,
+  token: `0x${string}`,
+): Promise<Awaited<ReturnType<NetworkConnection["viem"]["deployContract"]>>> {
+  const filler = await net.viem.deployContract("MockDecimals18");
+  return net.viem.deployContract("LoanSettlement", [token, filler.address]);
 }
 
 /** Current chain time as bigint. */

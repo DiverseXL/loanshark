@@ -2,7 +2,15 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { network } from "hardhat";
 import { maxUint256 } from "viem";
-import { assertBalance, deployWorld, makeTerms, now, ONE_USD, openActiveLoan } from "./support.js";
+import {
+  assertBalance,
+  deploySettlementFor,
+  deployWorld,
+  makeTerms,
+  now,
+  ONE_USD,
+  openActiveLoan,
+} from "./support.js";
 
 describe("LoanSettlement review follow-up", async function () {
   const net = await network.create();
@@ -206,7 +214,7 @@ describe("LoanSettlement review follow-up", async function () {
     const borrower = clients[1]!;
     const lender = clients[2]!;
     const token = await net.viem.deployContract("MockReentrantToken");
-    const settlement = await net.viem.deployContract("LoanSettlement", [[token.address]]);
+    const settlement = await deploySettlementFor(net, token.address);
 
     await token.write.mint([borrower.account.address, 10_000n * ONE_USD]);
     await token.write.mint([lender.account.address, 10_000n * ONE_USD]);

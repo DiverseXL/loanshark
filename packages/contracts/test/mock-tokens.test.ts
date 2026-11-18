@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { network } from "hardhat";
 import { maxUint256 } from "viem";
-import { deployWorld, makeTerms, now, ONE_USD } from "./support.js";
+import { deploySettlementFor, deployWorld, makeTerms, now, ONE_USD } from "./support.js";
 
 describe("LoanSettlement adversarial tokens", async function () {
   const net = await network.create();
@@ -12,7 +12,7 @@ describe("LoanSettlement adversarial tokens", async function () {
     const borrower = clients[1]!;
     const lender = clients[2]!;
     const token = await net.viem.deployContract("MockNoReturnToken");
-    const settlement = await net.viem.deployContract("LoanSettlement", [[token.address]]);
+    const settlement = await deploySettlementFor(net, token.address);
 
     await token.write.mint([borrower.account.address, 10_000n * ONE_USD]);
     await token.write.mint([lender.account.address, 10_000n * ONE_USD]);
@@ -37,7 +37,7 @@ describe("LoanSettlement adversarial tokens", async function () {
     const borrower = clients[1]!;
     const lender = clients[2]!;
     const token = await net.viem.deployContract("MockFalseReturnToken");
-    const settlement = await net.viem.deployContract("LoanSettlement", [[token.address]]);
+    const settlement = await deploySettlementFor(net, token.address);
 
     await token.write.mint([borrower.account.address, 10_000n * ONE_USD]);
     await token.write.mint([lender.account.address, 10_000n * ONE_USD]);
@@ -61,7 +61,7 @@ describe("LoanSettlement adversarial tokens", async function () {
     const borrower = clients[1]!;
     const lender = clients[2]!;
     const token = await net.viem.deployContract("MockFeeOnTransferToken");
-    const settlement = await net.viem.deployContract("LoanSettlement", [[token.address]]);
+    const settlement = await deploySettlementFor(net, token.address);
 
     await token.write.mint([lender.account.address, 10_000n * 10n ** 18n]);
     await token.write.approve([settlement.address, maxUint256], { account: lender.account });
@@ -111,7 +111,7 @@ describe("LoanSettlement adversarial tokens", async function () {
     const borrower = clients[1]!;
     const lender = clients[2]!;
     const token = await net.viem.deployContract("MockReentrantToken");
-    const settlement = await net.viem.deployContract("LoanSettlement", [[token.address]]);
+    const settlement = await deploySettlementFor(net, token.address);
 
     await token.write.mint([borrower.account.address, 10_000n * ONE_USD]);
     await token.write.mint([lender.account.address, 10_000n * ONE_USD]);

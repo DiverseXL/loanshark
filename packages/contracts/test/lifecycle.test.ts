@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { network } from "hardhat";
-import { assertBalance, deployWorld, makeTerms, now, ONE_USD, openActiveLoan } from "./support.js";
+import { maxUint256 } from "viem";
+import {
+  assertBalance,
+  deploySettlementFor,
+  deployWorld,
+  makeTerms,
+  now,
+  ONE_USD,
+  openActiveLoan,
+} from "./support.js";
 
 describe("LoanSettlement lifecycle", async function () {
   const net = await network.create();
@@ -54,8 +63,14 @@ describe("LoanSettlement lifecycle", async function () {
 
   it("supports an 18-decimal token with the same rules", async function () {
     const world = await deployWorld(net);
-    const { token18, settlement, borrower, lender } = world;
+    const { token18, borrower, lender } = world;
+    // The world settlement allows TestUSD and the mock fUSD, so this case uses
+    // its own settlement that allows the 18-decimal mock instead.
+    const settlement = await deploySettlementFor(net, token18.address);
     const unit = 10n ** 18n;
+    for (const wallet of [borrower, lender]) {
+      await token18.write.approve([settlement.address, maxUint256], { account: wallet.account });
+    }
     const terms = makeTerms({
       borrower,
       lender,

@@ -41,7 +41,14 @@ const VECTORS = (
  */
 describe("Solidity and TypeScript commitment", async function () {
   const net = await network.create();
-  const settlement = await net.viem.deployContract("LoanSettlement", [[]]);
+  // These are view-only tests; the two constructor addresses only satisfy the
+  // non-zero, distinct rule and are never called.
+  const tokenA = await net.viem.deployContract("MockDecimals18");
+  const tokenB = await net.viem.deployContract("MockDecimals18");
+  const settlement = await net.viem.deployContract("LoanSettlement", [
+    tokenA.address,
+    tokenB.address,
+  ]);
 
   it("matches every frozen TypeScript vector", async function () {
     for (const vector of VECTORS) {

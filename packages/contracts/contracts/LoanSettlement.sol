@@ -99,13 +99,18 @@ contract LoanSettlement is ReentrancyGuard {
     mapping(address => bool) private _allowedToken;
     address[] private _tokens;
 
-    constructor(address[] memory allowedTokens_) {
-        for (uint256 i = 0; i < allowedTokens_.length; i++) {
-            address token = allowedTokens_[i];
-            if (token == address(0) || _allowedToken[token]) revert InvalidAddress();
-            _allowedToken[token] = true;
-            _tokens.push(token);
+    /// @param testUsd_ The project's labelled test token.
+    /// @param fusd_ The fest fUSD contract allowed by ADR-0013 Option A.
+    /// @dev Both addresses are immutable in effect: there is no mutator and no
+    /// admin. A zero address or the same address twice is rejected.
+    constructor(address testUsd_, address fusd_) {
+        if (testUsd_ == address(0) || fusd_ == address(0) || testUsd_ == fusd_) {
+            revert InvalidAddress();
         }
+        _allowedToken[testUsd_] = true;
+        _tokens.push(testUsd_);
+        _allowedToken[fusd_] = true;
+        _tokens.push(fusd_);
     }
 
     // ---------------------------------------------------------------------
