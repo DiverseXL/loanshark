@@ -1,6 +1,6 @@
 # Threat model
 
-Status: initial, Phase 0, with rows added through Step 7. Each row needs a test before its milestone can be marked DONE.
+Status: initial, Phase 0, with rows added through Step 8. Each row needs a test before its milestone can be marked DONE.
 
 | # | Threat | Treatment | Test (planned) |
 |---|---|---|---|
@@ -32,5 +32,9 @@ Status: initial, Phase 0, with rows added through Step 7. Each row needs a test 
 | T26 | A credential or key is committed and published with the repository | gitleaks 8.30.1 over the full history in CI; `.gitleaks.toml` keeps the default rules and allowlists only the public QoreSeal vector fixture | `docs/evidence/phase-07-security.md` (local full-history run: no leaks; CI not run remotely) |
 | T27 | A dependency licence blocks redistribution under Apache-2.0 | `scripts/check-licences.mjs` fails on an unreviewed label; conditions for MPL-2.0 and CC-BY-4.0 are recorded in the README credits | `docs/evidence/phase-07-licences.md` (164 packages, 7 reviewed labels) |
 | T28 | A known vulnerable dependency is shipped without review | `pnpm audit --prod` is run and the result is recorded; one high advisory is accepted with its unused runtime path and a revisit condition | `docs/evidence/phase-07-security.md`; README limitation 31 |
+| T29 | The seal mnemonic is exposed by the page, a log, an error, storage or a network call | The mnemonic is generated in the browser, shown once behind an "I have saved it" confirmation, held in memory only and never stored, logged, placed in a URL or sent; the script reads it only from `LOANSHARK_SEAL_MNEMONIC`; keys are private fields with redacted debug/JSON output | `packages/seal-account/test/redaction.test.ts` and `test/browser-safety.test.ts` (static and runtime, TEST ONLY mnemonic); `apps/web/test/hygiene.test.ts` (no storage API, no fetch in the seal panel, mnemonic cleared after confirmation); ADR-0005 |
+| T30 | A forged binding statement joins a wallet account W to a seal account E it does not control | Both W and E sign the fixed-line statement; verification requires the post-quantum part of both against the on-chain ML-DSA-87 keys; W's EVM address must equal the `0x` form of W's verified classical key; expiry and chain are checked | `packages/seal-account/test/binding.test.ts` (pq part removed, changed address, expired, wrong account, EVM address mismatch, future timestamp) |
+| T31 | A stolen seal key decrypts historical envelopes or a stolen E spends more than its fee balance | Separate E per party; E holds only testnet QOR for fees; envelopes are per-recipient; the card binds the KEM key; the callers label what a compromise of E can and cannot do | `packages/seal-account/test/seal.test.ts` (wrong-recipient refusal); ADR-0004 and ADR-0005 consequences; owner checklist separates the W and E mnemonics |
+| T32 | A party reuses the QoreX mnemonic for the seal account, putting the wallet key in the browser | The owner checklist forbids reuse and the generator script creates a new phrase; the browser panel generates a fresh phrase in memory; no code accepts a QoreX seed | `scripts/gen-test-mnemonic.mjs` output is a fresh phrase; `docs/evidence/phase-08-owner-checklist.md` (OWNER-SUPPLIED confirmation); static check that no source asks for a wallet mnemonic |
 
 Non-goals: anonymity, private ERC-20 transfers, FHE, a private matching engine, credit scoring, legal enforceability, production lending.
