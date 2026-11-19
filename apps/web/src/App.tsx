@@ -1,9 +1,10 @@
 // LOANSHARK diagnostics surface.
 //
-// This is a technical validation page, not a product UI. It has six panels,
-// each with a raw JSON toggle. Nothing here sends a transaction, stores key
-// material or asks the wallet to sign anything except the fixed test message,
-// and only after a button press.
+// This is a technical validation page, not a product UI. It has seven numbered
+// panels, each with a raw JSON toggle, plus an owner-run deployment panel.
+// Nothing here sends a transaction, stores key material or asks the wallet to
+// sign anything except the fixed test message, and only after a button press.
+// The seal account panel generates a backup phrase in memory and never persists it.
 //
 // Read order matters: the wallet address and both chain ids are rendered in
 // panels 2 and 3 and repeated above the signing button in panel 5, so a user
@@ -21,8 +22,10 @@ import {
   REST_HOST,
   TEST_MESSAGE,
 } from "./constants.js";
+import { DeployPanel } from "./deploy/DeployPanel.js";
 import { CLAIM_ROWS, ENCRYPTED_OFF_CHAIN, NO_ZK_CLAIM, PUBLIC_ON_CHAIN } from "./privacy.js";
 import { safeJson, summariseProvider } from "./safe-json.js";
+import { SealPanel } from "./seal/SealPanel.js";
 import type { AccountRecordOutcome } from "./wallet/account.js";
 import { createRestAccountReader, fetchAccountRecord } from "./wallet/account.js";
 import type { ChainGuardState, ChainReading } from "./wallet/chains.js";
@@ -30,7 +33,6 @@ import { evaluateChainGuard, readChains } from "./wallet/chains.js";
 import type { NativeConnection } from "./wallet/connect.js";
 import { connectNative } from "./wallet/connect.js";
 import { detectQorex } from "./wallet/detect.js";
-import { DeployPanel } from "./deploy/DeployPanel.js";
 import { QorexMessageSigner } from "./wallet/signer.js";
 import type { SignatureReport } from "./wallet/signing.js";
 import { runSignatureChecks } from "./wallet/signing.js";
@@ -694,9 +696,11 @@ export function App() {
           )}
         </Panel>
 
+        <SealPanel />
+
         <Panel
           id="panel-6"
-          title="6. Privacy boundary"
+          title="7. Privacy boundary"
           raw={{
             claimRows: CLAIM_ROWS,
             noZeroKnowledge: NO_ZK_CLAIM,
@@ -741,7 +745,7 @@ export function App() {
 
         <section className="panel" aria-labelledby="deploy-heading">
           <div className="panel-head">
-            <h2 id="deploy-heading">7. Testnet deployment (owner-run)</h2>
+            <h2 id="deploy-heading">8. Testnet deployment (owner-run)</h2>
             <span className="badge bad">OWNER-RUN</span>
           </div>
           <div className="notice bad-notice">

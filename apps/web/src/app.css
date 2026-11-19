@@ -167,6 +167,16 @@ pre {
   margin: 8px 0 12px;
 }
 
+.seal-phrase {
+  border: 2px solid #a01b1b;
+  background: rgba(160, 27, 27, 0.06);
+  font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  line-height: 1.8;
+  user-select: all;
+}
+
 .deploy-step {
   border: 1px solid #8a8a8a;
   border-radius: 5px;

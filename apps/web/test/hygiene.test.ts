@@ -32,14 +32,17 @@ const indexHtml = readFileSync(join(appRoot, "index.html"), "utf8");
 const css = readFileSync(join(srcRoot, "app.css"), "utf8");
 
 describe("storage and key material", () => {
-  const forbidden: Array<{ pattern: RegExp; label: string }> = [
+  const sealPanelPrefix = join("src", "seal");
+  const forbidden: Array<{ pattern: RegExp; label: string; allowIn?: string }> = [
     { pattern: /\blocalStorage\b/, label: "localStorage" },
     { pattern: /\bsessionStorage\b/, label: "sessionStorage" },
     { pattern: /\bindexedDB\b/i, label: "IndexedDB" },
     { pattern: /\bIDBFactory\b/, label: "IDBFactory" },
     { pattern: /\bcaches\b/, label: "Cache Storage" },
     { pattern: /document\.cookie/, label: "document.cookie" },
-    { pattern: /mnemonic/i, label: "mnemonic" },
+    // The seal account module necessarily names the generated mnemonic; no
+    // other source file may.
+    { pattern: /mnemonic/i, label: "mnemonic", allowIn: sealPanelPrefix },
     { pattern: /seedPhrase|seed phrase/i, label: "seed phrase" },
     { pattern: /privateKey|private_key/i, label: "private key" },
     { pattern: /secretKey|secret_key/i, label: "secret key" },
@@ -53,9 +56,53 @@ describe("storage and key material", () => {
   it("has no storage API and no key-like material in apps/web/src", () => {
     for (const file of sourceFiles) {
       for (const rule of forbidden) {
+        if (rule.allowIn !== undefined && file.path.startsWith(rule.allowIn)) continue;
         expect(rule.pattern.test(file.text), `${rule.label} in ${file.path}`).toBe(false);
       }
     }
+  });
+
+  it("names the mnemonic only in the seal panel", () => {
+    const mentions = sourceFiles
+      .filter((file) => /mnemonic/i.test(file.text))
+      .map((file) => file.path);
+    expect(mentions).toEqual([join("src", "seal", "SealPanel.tsx")]);
+  });
+});
+
+describe("seal account panel", () => {
+  const sealFiles = sourceFiles.filter((file) => file.path.startsWith(join("src", "seal")));
+
+  it("exists and is the only seal source file", () => {
+    expect(sealFiles.map((file) => file.path)).toEqual([join("src", "seal", "SealPanel.tsx")]);
+  });
+
+  it("makes no network call, logs nothing and has no effect or timer", () => {
+    const forbidden = [
+      { pattern: /\bfetch\s*\(/, label: "fetch" },
+      { pattern: /\bXMLHttpRequest\b/, label: "XMLHttpRequest" },
+      { pattern: /\bWebSocket\b/, label: "WebSocket" },
+      { pattern: /\bnavigator\.sendBeacon\b/, label: "sendBeacon" },
+      { pattern: /\bconsole\./, label: "console" },
+      { pattern: /\bwindow\.location\b|\blocation\.href\b/, label: "location" },
+      { pattern: /\buseEffect\b/, label: "useEffect" },
+      { pattern: /\bsetInterval\b|\bsetTimeout\b/, label: "timer" },
+      { pattern: /from\s+["']@qorechain\//, label: "direct QoreChain import" },
+    ];
+    for (const file of sealFiles) {
+      for (const rule of forbidden) {
+        expect(rule.pattern.test(file.text), `${rule.label} in ${file.path}`).toBe(false);
+      }
+    }
+  });
+
+  it("clears the phrase after the backup confirmation and offers a forget action", () => {
+    const panel = sealFiles[0]?.text ?? "";
+    expect(panel).toContain("generateSealAccount({ chainId: NATIVE_CHAIN_ID })");
+    expect(panel).toContain('phrase: ""');
+    expect(panel).toContain("I have saved it: hide the phrase");
+    expect(panel).toContain("Forget the seal identity in this page");
+    expect(panel).toContain("recipientCard()");
   });
 });
 
