@@ -15,7 +15,7 @@
     "lint": "biome lint .",
     "format:check": "biome format .",
     "typecheck": "pnpm -r --if-present typecheck",
-    "test": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build && pnpm --filter @loanshark/seal-account build && vitest run && pnpm --filter @loanshark/contracts test",
+    "test": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build && pnpm --filter @loanshark/seal-account build && pnpm --filter @loanshark/api build && pnpm --filter @loanshark/relay-client build && vitest run && pnpm --filter @loanshark/contracts test",
     "build": "pnpm -r --if-present build"
   },
   "devDependencies": {

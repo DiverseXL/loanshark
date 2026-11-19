@@ -310,6 +310,34 @@ importers:
         specifier: 0.2.0
         version: 0.2.0
 
+  packages/relay-client:
+    dependencies:
+      '@loanshark/api':
+        specifier: workspace:*
+        version: link:../../apps/api
+      '@loanshark/chain-client':
+        specifier: workspace:*
+        version: link:../chain-client
+      '@loanshark/qoreseal-adapter':
+        specifier: workspace:*
+        version: link:../qoreseal-adapter
+      '@loanshark/seal-account':
+        specifier: workspace:*
+        version: link:../seal-account
+      '@qorechain/qoreseal':
+        specifier: 0.1.0
+        version: 0.1.0
+    devDependencies:
+      '@types/node':
+        specifier: 26.6.6
+        version: 26.6.6
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 5.1.0
+        version: 5.1.0(@types/node@26.6.6)(vite@7.3.8(@types/node@26.6.6)(lightningcss@1.33.0)(tsx@4.23.15))
+
   packages/seal-account:
     dependencies:
       '@loanshark/chain-client':
