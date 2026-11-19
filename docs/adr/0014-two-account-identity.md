@@ -110,11 +110,11 @@ the EVM account would be stronger and is deferred.
 
 The frozen encodings do **not** change in this step:
 
-- ADR-0007's AAD has `borrower` and `lender` fields and `expectedSigner` returns one of them. If E
-  signs envelopes, those fields and the envelope verifier must eventually identify E, while the
-  agreement and the settlement contract still identify W's EVM address. Whether the AAD fields should
-  carry W or E addresses, or both, is an **open item for Step 9**. Changing the frozen AAD vectors in
-  Step 8 would break ADR-0007 and is explicitly out of scope.
+- ADR-0007's AAD has `borrower` and `lender` fields and `expectedSigner` returns one of them.
+  Resolved in Step 9 by ADR-0015: the AAD `borrower` and `lender` fields carry the WALLET (W) `qor1`
+  addresses because W is the party identity across the agreement and settlement contract. Envelopes
+  are sealed to and signed by seal account E, linked to W by this ADR's binding statement. The frozen
+  AAD vectors (ADR-0007) are preserved unchanged.
 - ADR-0010's agreement text and confirmation encoding are unchanged. W's confirmation still speaks
   for the EVM address in the terms; the binding statement is a separate artefact.
 - `Terms.borrower` and `Terms.lender` remain explicit EVM addresses supplied by the parties

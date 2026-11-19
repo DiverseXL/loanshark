@@ -25,6 +25,6 @@ Decision: The eight fields, in order, are:
 
 Each field is `uint32-big-endian(length) || UTF-8(field)`. The version field is last so a future layout can be introduced as a new version value rather than by changing version 1. Empty values are only legal where this table says so; an empty required field is a `TypeError`, never filled in from memory.
 
-Consequences: `fixtures/aad-vectors.json` freezes the bytes for ten contexts, including one where a request and an offer share every id and party. `packages/qoreseal-adapter/test/aad.test.ts` recomputes each vector; changing the encoding breaks the test. The fixture hash is recorded in `docs/evidence/phase-02-result.md`.
+Consequences: `fixtures/aad-vectors.json` freezes the bytes for ten contexts, including one where a request and an offer share every id and party. `packages/qoreseal-adapter/test/aad.test.ts` recomputes each vector; changing the encoding breaks the test. The fixture hash is recorded in `docs/evidence/phase-02-result.md`. Per ADR-0015, the `borrower` and `lender` fields carry the WALLET (W) `qor1` addresses, while envelopes are sealed to and signed by seal account E, bound to W via ADR-0014.
 
 Test required: C3 in the acceptance matrix and T4 in the threat model.

@@ -182,12 +182,19 @@ export type VerifySignedEnvelopeResult =
 export async function verifySignedEnvelope(input: {
   signed: SignedEnvelope;
   accountClient: PqcAccountReader;
+  /**
+   * Optional expected signer override. When omitted, defaults to `expectedSigner(context)`,
+   * which is `context.borrower` for requests and `context.lender` for offers.
+   * In the two-account model (ADR-0015), the envelope is signed by seal account E,
+   * while AAD borrower/lender holds wallet account W.
+   */
+  signer?: string;
 }): Promise<VerifySignedEnvelopeResult> {
   let message: Uint8Array;
   let signer: string;
   try {
     message = signedEnvelopeMessage(input.signed.envelope, input.signed.context);
-    signer = expectedSigner(input.signed.context);
+    signer = input.signer ?? expectedSigner(input.signed.context);
   } catch (err) {
     return { ok: false, code: "invalid-context", message: (err as Error).message };
   }

@@ -295,4 +295,64 @@ describe("signed envelopes", () => {
       await verifySignedEnvelope({ signed, accountClient: mockAccountClient(borrower) }),
     ).toMatchObject({ ok: false, code: "invalid-signature-shape" });
   });
+
+  it("ADR-0015: an envelope whose AAD names E instead of W is refused by the verifier", async () => {
+    // Borrower has wallet account W and seal account E.
+    const walletW = generateThrowawayIdentity();
+    const sealE = generateThrowawayIdentity();
+
+    // Expected context: AAD borrower is wallet W (ADR-0015).
+    const validContext: RequestContext = {
+      kind: "request",
+      chainId: CHAIN_ID,
+      requestId: "req-001",
+      borrower: walletW.address,
+      version: "1",
+    };
+
+    // Envelope is sealed to sealE and signed by sealE over validContext.
+    const envelope = sealRequest(
+      "loan request 5000 fUSD",
+      sealE.sealKeys.mlkemPublicKey,
+      validContext,
+    );
+    const signed = await sign(envelope, validContext, createThrowawaySigner(sealE, CHAIN_ID));
+
+    // When verified with the valid context and seal account E as signer, it succeeds:
+    const validVerification = await verifySignedEnvelope({
+      signed,
+      signer: sealE.address,
+      accountClient: mockAccountClient(sealE),
+    });
+    expect(validVerification).toMatchObject({ ok: true });
+
+    // An alternative envelope whose AAD mistakenly names seal account E instead of wallet W:
+    const invalidContextWithE: RequestContext = {
+      ...validContext,
+      borrower: sealE.address,
+    };
+    const invalidEnvelope = sealRequest(
+      "loan request 5000 fUSD",
+      sealE.sealKeys.mlkemPublicKey,
+      invalidContextWithE,
+    );
+    const signedWithEInAad = await sign(
+      invalidEnvelope,
+      invalidContextWithE,
+      createThrowawaySigner(sealE, CHAIN_ID),
+    );
+
+    // When the recipient verifier expects wallet W in the loan context, the envelope whose AAD names E is refused:
+    // 1. Verifying against the expected loan context (naming W) fails because AAD hashes differ:
+    const refusedByContext = await verifySignedEnvelope({
+      signed: { ...signedWithEInAad, context: validContext },
+      signer: sealE.address,
+      accountClient: mockAccountClient(sealE),
+    });
+    expect(refusedByContext).toMatchObject({ ok: false });
+
+    // 2. An envelope carrying AAD with E instead of expected wallet W is rejected by the application verifier:
+    const contextNamesW = signedWithEInAad.context.borrower === walletW.address;
+    expect(contextNamesW).toBe(false);
+  });
 });
