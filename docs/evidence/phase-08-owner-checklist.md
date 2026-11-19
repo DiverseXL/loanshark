@@ -30,7 +30,8 @@ start again with a new phrase. Do not send the exposed phrase anywhere.
 - [ ] Repository is at the commit that contains this checklist: OWNER-SUPPLIED (`git rev-parse HEAD`).
 - [ ] `pnpm install` succeeded.
 - [ ] `pnpm --filter @loanshark/seal-account build` succeeded.
-- [ ] Node is 22 or newer: OWNER-SUPPLIED (`node --version`).
+- [ ] Node matches the pinned version in `package.json` (`engines.node`, currently 26.13.0):
+      OWNER-SUPPLIED (`node --version`).
 - [ ] QoreX is on QoreChain Diana: native `qorechain-diana`, EVM `0x2648` (9800). No mainnet.
 - [ ] The two wallet accounts W already exist and their `qor1` and `0x` addresses are known.
 - [ ] Each E account will get a **fresh** 24-word phrase. Do not reuse QoreX's mnemonic and do not

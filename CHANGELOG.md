@@ -4,6 +4,30 @@ No release has been made. The project is built one phase at a time and each entr
 
 ## Unreleased
 
+### Step 8: seal account and W/E binding
+
+Added:
+
+- `packages/seal-account`: a browser-safe, mnemonic-derived seal account E with ML-DSA-87, ML-KEM-1024 and X25519 keys, redacted public data, the official signed recipient card, hybrid message signing, seal-to-self and the ADR-0014 W/E binding statement. 52 tests, including five frozen test vectors and the frozen binding text.
+- `scripts/onboard-seal-account.mjs`: owner-run onboarding for E. Defaults to a read-only dry run; `--execute` registers a missing ML-DSA-87 key with a `classicalOnly` signature and a missing ML-KEM key with a hybrid signature, then reads both back. Refuses any chain other than `qorechain-diana`, any REST endpoint other than `https://api-testnet.qore.host`, and needs an exact typed `REGISTER <address>` confirmation. 13 tests.
+- Panel 6 in `apps/web`: generates an E identity in memory, shows the 24-word phrase once, clears it on confirmation, signs the recipient card and can forget the identity. No network, storage, log or transaction call.
+- `scripts/check-web-bundle.mjs` and `pnpm --filter @loanshark/web check:bundle`: project size, remote-asset and CSP budgets.
+- ADR-0014 (two-account identity), rewritten ADR-0004 and ADR-0005, threat rows T29 to T32, source-lock claims 57 to 65, and evidence files `phase-08-source-check.md`, `phase-08-onboarding-dry-run.md`, `phase-08-browser-panel.md`, `phase-08-owner-checklist.md` and `phase-08-result.md`.
+
+Changed:
+
+- ML-KEM registration is UNBLOCKED in source (M0-6): fund E, register ML-DSA-87 with QoreSign `register-and-send`, then register ML-KEM with QoreSeal. It is not proven live.
+- E countersigns statements with QoreSign `signMessage`, not `signHybrid`: source-lock claim 63 records that `signHybrid` signs transaction bytes. The shape still verifies with `verifyHybridMessage`.
+- Binding text is fixed at seven lines; every field is validated so no newline can shift the layout. The default lifetime is 30 days and the maximum is 90 (project choices).
+- README milestone and limitation sections, the acceptance matrix (C13/C14 PENDING, status `UNBLOCKED`) and the evidence index.
+
+Not done:
+
+- No seal account was created and no key was registered by this repository. `--execute` was not run. The dry run used the public all-zero test phrase and sent nothing.
+- No owner-run command produces or verifies a binding statement, so C14 is PENDING. Frozen AAD and agreement encodings are unchanged; W-versus-E envelope addresses remain a Step 9 item.
+- The browser panel was built and checked statically, not driven in a browser.
+- No phrase is persisted; reloading the page loses the identity. Test-only phrase generation is not suitable for an owner account.
+
 ### Step 6b: deployment readiness for Diana
 
 Added:

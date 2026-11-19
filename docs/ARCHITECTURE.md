@@ -1,6 +1,6 @@
 # Architecture
 
-Status: Phase 4. The offline QoreSeal adapter, agreement package and local settlement contracts exist, and `apps/web` is a client-only diagnostics page with QoreX detection, a two-lane chain guard and fixed-message signing. The product UI, the API and any deployment do not exist. Components marked (blocked) depend on an unverified protocol capability.
+Status: Phase 4 base, with the Step 8 two-account identity added. The offline QoreSeal adapter, seal-account package, agreement package and local settlement contracts exist, and `apps/web` is a client-only diagnostics page with QoreX detection, a two-lane chain guard, fixed-message signing, a seal-account panel and an owner-run deployment panel. The product UI, the API and any deployment do not exist. Components marked (unverified) depend on a protocol capability that has not been exercised live.
 
 ## Components
 
@@ -10,7 +10,7 @@ flowchart LR
     UI[Web app]
     SEAL[QoreSeal TS adapter]
     AGR[Agreement package]
-    KEYS[Seal key store, local only]
+    KEYS[Seal account E: identity, keys and card, in memory or offline]
   end
   QX[QoreX wallet extension]
   API[Application API: ciphertext and routing metadata only]
@@ -26,14 +26,15 @@ flowchart LR
   QX --> REG
   UI -- "EVM txs" --> SET
   SET --> TOK
-  SEAL -. "reads recipient keys (blocked: KEM registration)" .-> REG
+  SEAL -. "reads recipient keys (owner-run registration, not proven live)" .-> REG
 ```
 
 ## Trust boundaries
 
 - The server stores ciphertext, signatures and routing metadata. It never sees plaintext, seed phrases, recovery codes or private keys.
 - QoreX holds the account's secp256k1 and ML-DSA-87 keys. The app asks it to sign; it never holds them.
-- The ML-KEM / X25519 decryption keys are held by the app in the browser, because QoreX exposes no seal-key or decrypt method (ADR-0005).
+- The **wallet account W** (QoreX) sends every EVM transaction and holds the tokens. The **seal account E** (app-held) publishes the ML-KEM key, signs the card and envelopes, and countersigns the W/E binding statement. E holds only the testnet QOR it needs for its own registration.
+- The ML-KEM / X25519 decryption keys are held by the app in the browser, because QoreX exposes no seal-key or decrypt method (ADR-0005). Step 8 keeps them in memory only; persistence is deferred.
 - On-chain data is public: addresses, token transfers, timing, the agreement commitment hash.
 
 ## Signing lanes

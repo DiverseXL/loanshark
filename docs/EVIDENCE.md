@@ -24,6 +24,10 @@ Rules used throughout:
 | `phase-06-verify-smoke.md` | 2026-11-18 | Read-only network run | Verifier run against Diana with deliberately wrong addresses; raw JSON-RPC included | A smoke test of failure reporting, **not** deployment evidence |
 | `phase-07-licences.md` | 2026-11-18 | Licence review | Every installed licence label, package counts and the allowlist decision | Declared licences only; not legal advice; current lockfile only |
 | `phase-07-security.md` | 2026-11-18 | Security review | Full-history secret scan, the QoreSeal-vector allowlist, dependency audit and its accepted advisory, existing static checks | Review, not a penetration test or audit; advisory data is dated |
+| `phase-08-source-check.md` | 2026-11-19 | Source check | QoreSign and QoreSeal commit pins, the fifteen installed exports actually used, the register-and-send path and the `signMessage` correction | Read from installed packages and published source; no live registration |
+| `phase-08-onboarding-dry-run.md` | 2026-11-19 | Read-only network run | Offline derivation for the public test phrase and four raw Diana GET responses | TEST ONLY phrase; no transaction, no signature and no registration |
+| `phase-08-browser-panel.md` | 2026-11-19 | Build and static check | Panel 6 source shape, static hygiene checks, production build sizes, CSP and bundle budget | Not opened in a browser; the phrase-erasure claim is a UI claim, not a memory proof |
+| `phase-08-result.md` | 2026-11-19 | Phase result | What Step 8 added, measured test and build counts, and the limits that remain | Local and dry-run only; C13 and C14 are PENDING |
 
 ## Owner-supplied files
 
@@ -33,6 +37,7 @@ Rules used throughout:
 | `phase-06-owner-checklist.md` | BLANK | Diana deployment run in the documented order, including the lane check and the exact wallet text |
 | `phase-06-owner-deploy.md` | BLANK | The panel's JSON block and the owner's deployment record |
 | `phase-06-verify.md` | NOT RUN | The report written by `scripts/verify-deployment.mjs` after a real deployment |
+| `phase-08-owner-checklist.md` | BLANK | Fresh borrower and lender seal accounts, two dry runs, two `--execute` registrations with transaction hashes, independent read-back and the card. Binding statement fields and the W signature, with the E countersignature marked NOT PRODUCED |
 
 A blank owner file is evidence of a missing step, not of a passing one.
 
@@ -47,6 +52,7 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm --filter @loanshark/web build
+pnpm --filter @loanshark/web check:bundle
 ```
 
 The secret scan command is in `docs/evidence/phase-07-security.md`. The deployment verifier command is in `docs/evidence/phase-06-owner-checklist.md`; it needs owner-supplied addresses and has no transaction path.
