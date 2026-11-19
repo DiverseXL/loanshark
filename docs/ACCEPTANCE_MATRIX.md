@@ -4,7 +4,7 @@ Every requirement maps to an implementation path, a test path, an evidence path 
 
 Status values: `PENDING`, `IN PROGRESS`, `DONE`, `BLOCKED`.
 
-Last updated: Step 6b (deployment readiness for Diana), 2026-11-18. Nothing is deployed; C12 is PENDING until owner-supplied evidence exists.
+Last updated: Step 7 (local hardening and evidence pack), 2026-11-18. Nothing is deployed; C12 is PENDING until owner-supplied evidence exists. The H rows are local repository checks; CI has not run on GitHub.
 
 Submission requirements from the organiser's pages (public repository, licence, README, cover image, video, testnet address, kit credits, `AI_USAGE.md` and the Encrypted Apps requirements) are mapped in `docs/SUBMISSION.md`. Every row there is PENDING by design, because none can be closed before the repository is public and the project is entered. The rows below cover technical assertions.
 
@@ -36,3 +36,7 @@ Submission requirements from the organiser's pages (public repository, licence, 
 | T9 | Unauthorised withdrawal, reentrancy or a malicious token drains funds | `LoanSettlement` role checks, `ReentrancyGuard`, `SafeERC20`, exact balance deltas and immutable allowlist | `packages/contracts/test/mock-tokens.test.ts` (reentrant, no-return, false-return, fee-on-transfer, not allowlisted) and `test/lifecycle.test.ts` (wrong callers) | `evidence/phase-03-result.md` | DONE (local Hardhat network, mock tokens, not deployed) |
 | T10 | Decimal or amount errors | Amounts are base units; no rate math; tests cover 6 and 18 decimals | `packages/contracts/test/lifecycle.test.ts` (both decimals) and `test/invariants.test.ts` | `evidence/phase-03-result.md` | DONE (local Hardhat network, not deployed) |
 | T11 | Replay or duplicate repayment | One loan per commitment; terminal-state and exact-outstanding checks | `packages/contracts/test/lifecycle.test.ts` (duplicate proposal, double fund/claim, repayment after Repaid) and `test/invariants.test.ts` | `evidence/phase-03-result.md` | DONE (local Hardhat network, not deployed) |
+| H1 | Every installed dependency licence is reviewed and compatible with Apache-2.0 distribution | `scripts/check-licences.mjs`, `pnpm licence-check` and a CI step | The script exits 0 on the current lockfile; it exits 1 on an unreviewed label | `evidence/phase-07-licences.md` | DONE (local; 164 packages, 7 reviewed labels; CI has not run on GitHub) |
+| H2 | No credential is committed in the repository history | `.gitleaks.toml`; gitleaks job in `.github/workflows/ci.yml` | gitleaks 8.30.1 full-history scan exits 0 after the one-file allowlist for public QoreSeal vectors | `evidence/phase-07-security.md` | DONE (local; CI has not run on GitHub) |
+| H3 | Known dependency advisories are reviewed and recorded, not silently ignored | `pnpm audit --prod`; README limitation 31 | Audit output captured; the single high advisory is an unused optional peer, absent from the built web bundle | `evidence/phase-07-security.md` | DONE (reviewed with one accepted advisory; not a claim of zero vulnerabilities) |
+| H4 | Every evidence file is indexed with its limits, and owner-supplied blanks are distinguishable | `docs/EVIDENCE.md` | Review of the index against `docs/evidence/`; docs consistency pass | `docs/EVIDENCE.md`; `evidence/phase-07-result.md` | DONE (local) |

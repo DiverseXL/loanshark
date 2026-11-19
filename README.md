@@ -2,7 +2,7 @@
 
 Private financing on QoreChain: encrypted requests, separately encrypted lender offers, a verifiable agreement commitment, and real test-token settlement.
 
-> Status: Phase 4 (browser diagnostics app and QoreX read/sign-message layer, local only), plus Step 6a submission preparation and Step 6b deployment readiness for Diana. This repository contains the architecture, threat model, decision records and source lock from Phase 0, a hybrid signature verifier in `packages/chain-client`, an offline QoreSeal adapter in `packages/qoreseal-adapter`, an agreement package in `packages/agreement`, a local Hardhat settlement package in `packages/contracts`, and a client-only diagnostics app in `apps/web` with an owner-run testnet deployment panel. The on-chain ML-KEM registration path is BLOCKED, so the adapter uses explicit mlkem mode only. No contract has been deployed by this repository or the assistant, and there is no product app or API. Every claim below is either backed by a link into `docs/` or marked as not yet built.
+> Status: Phase 4 (browser diagnostics app and QoreX read/sign-message layer, local only), plus Step 6a submission preparation, Step 6b deployment readiness for Diana and Step 7 local hardening and evidence packing. This repository contains the architecture, threat model, decision records and source lock from Phase 0, a hybrid signature verifier in `packages/chain-client`, an offline QoreSeal adapter in `packages/qoreseal-adapter`, an agreement package in `packages/agreement`, a local Hardhat settlement package in `packages/contracts`, and a client-only diagnostics app in `apps/web` with an owner-run testnet deployment panel. The on-chain ML-KEM registration path is BLOCKED, so the adapter uses explicit mlkem mode only. No contract has been deployed by this repository or the assistant, and there is no product app or API. Every claim below is either backed by a link into `docs/` or marked as not yet built.
 
 Built for the QoreChain hackathon, Encrypted Apps category. Target network: QoreChain Diana Testnet (`qorechain-diana`). Testnet only; not a regulated lending service.
 
@@ -35,7 +35,7 @@ No zero-knowledge proofs, FHE or confidential computation are used or claimed.
 | M4 | Test token and settlement contracts | Deployment-ready, not deployed. `TestUSD` and `LoanSettlement` run on the in-process Hardhat network with 38 tests, including the ADR-0013 Option A two-token constructor and a full lifecycle in `TestUSD` and in a MOCK fUSD-profile token. A reproducible manifest (`docs/deployments/manifest.json`) pins the bytecode hashes, and `apps/web` has an owner-run, click-only deploy panel. No deployment exists; C12 is PENDING. Evidence in `docs/evidence/phase-03-result.md`, `docs/evidence/phase-03b-result.md` and `docs/evidence/phase-06-result.md` |
 | M5 | Hybrid authorisation and wallet flow | Partial, local only: `apps/web` detects QoreX, guards both chain IDs and signs one fixed message on explicit button press, verifying it locally with the post-quantum part required. No EVM window, no transaction and no EVM authorisation flow. Owner-run browser evidence is pending. Evidence in `docs/evidence/phase-04-result.md` and the blank checklist in `docs/evidence/phase-04-owner-checklist.md` |
 | M6 | Integrated UI | Not started |
-| M7 | Hardening and evidence pack | Not started |
+| M7 | Hardening and evidence pack | Local: dependency licence allowlist enforced in CI, full-history secret scan with a one-file reviewable allowlist, dependency audit recorded with one accepted advisory, evidence index and docs consistency pass. CI has not run on GitHub; owner-run browser and deployment evidence remain blank. Evidence in `docs/EVIDENCE.md`, `docs/evidence/phase-07-licences.md` and `docs/evidence/phase-07-security.md` |
 
 The full requirement-to-test-to-evidence mapping is in `docs/ACCEPTANCE_MATRIX.md`. Nothing is marked DONE without a passing test and recorded evidence. The organiser's submission requirements, and the owner action each one needs, are tracked separately in `docs/SUBMISSION.md`; every item there is PENDING until the repository is public and the project is entered.
 
@@ -68,10 +68,10 @@ See `docs/ARCHITECTURE.md` (component diagram, trust boundaries, the two signing
 7. **QoreX handles one signing request at a time.** The diagnostics signer queues requests defensively and its MOCK-provider test covers the queue. The wallet's own one-at-a-time behaviour is an owner report (source-lock claim 44), not reproduced here.
 8. **The QoreX dApp refusal list was read from the wallet-adapter source, not tested against QoreX.**
 9. **Only message signatures are verified.** `verifyHybridMessage` covers `signArbitrary` messages, not transactions. Envelope authentication is built offline, but every envelope test signs with a throwaway QoreSign key and a MOCK account client; the recorded real QoreX fixture's message text is the string reported as signed, not an independently captured one.
-10. **CI has not run on GitHub.** The workflow exists and its commands pass locally; no remote is configured and no run link exists.
+10. **CI has not run on GitHub.** The workflow exists and its commands pass locally, including the licence check and the configured gitleaks scan; no remote is configured and no run link exists.
 11. **The offline tests prove behaviour, not chain registration.** They use generated throwaway keys, a mocked account client and a mocked KEM registry. No test in this phase registered a key, opened an EVM window or contacted the KEM endpoint.
 12. **AAD and signed-message formats are project assumptions.** The length-prefixed encoding (ADR-0007), the SHA-256 domain-tagged message (ADR-0003) and the agreement text/confirmation formats (ADR-0010) are not QoreChain standards.
-13. **The contracts are not deployed and are unaudited.** They run on the in-process Hardhat network and have never been deployed to Diana or any other chain by this project. A reproducible manifest and a read-only verifier exist, but no deployment result is claimed. No gas, security or economic review has been done beyond the tests in `docs/evidence/phase-03-result.md` and `docs/evidence/phase-06-result.md`.
+13. **The contracts are not deployed and are unaudited.** They run on the in-process Hardhat network and have never been deployed to Diana or any other chain by this project. A reproducible manifest and a read-only verifier exist, but no deployment result is claimed. No gas, security or economic audit has been done beyond the tests in `docs/evidence/phase-03-result.md` and `docs/evidence/phase-06-result.md`; the local hardening review in `docs/evidence/phase-07-security.md` is not an audit.
 14. **The qor1-to-0x identity link is unconfirmed.** The derived address is `0xd0a1453c7b8157aa0635076c33b3e24a50a923c5`, but the owner has not compared it with the address QoreX reports on its EVM provider. ADR-0009 records the check and the fallback.
 15. **The allowlist is TestUSD and fUSD (ADR-0013 Option A).** `TestUSD` is labelled testnet demo money and has no value. The fest fUSD at `0x97143B771D34ddb9130b807b135Ae675A5a963CA` is also allowed so a juror can use faucet tokens. Its issuer, backing and controls are unknown, and this project has not exercised a real fUSD transfer. Contract tests use a clearly named `MockFusdProfile` for the second token; that is a mock, not the real contract.
 16. **The contract does not verify the signed agreement.** A lender must compare the stored terms with the signed document, and the UI must recompute the commitment and compare it with `loanId` and `termsOf()` before enabling `fund`. The contract only commits to the terms it is given; it cannot verify a signature or read a document. C11 is PENDING because the fund UI does not exist.
@@ -89,6 +89,9 @@ See `docs/ARCHITECTURE.md` (component diagram, trust boundaries, the two signing
 28. **The deploy panel cannot switch the wallet's network and requires QoreX.** It sends only from the connected EVM account, and a wallet rejection is shown verbatim, including any authorization-window message. If the lane check is rejected, the checklist says stop rather than retry.
 29. **A bytecode hash proves code equality, not correct behaviour.** The verifier compares `eth_getCode` with the manifest. If only the CBOR metadata trailer differs it reports that explicitly; it does not prove the contract is safe, that storage is initialised as intended, or that the owner controls the deployer account.
 30. **fUSD is a third-party token.** Its issuer, deployer, mint control, backing and pause or blocklist powers are unknown. Allowing it trades a reproducibility gain for a dependency this project does not control; ADR-0013 records the owner's decision and the residual risk.
+31. **One high-severity dependency advisory is accepted, not fixed.** `pnpm audit --prod` reports GHSA-mrhx-c7xc-m3w5 for `zod` 3.25.76, which is installed as an optional peer of `abitype` under `viem` and under Hardhat. The vulnerable export is not imported by this repository or by the installed `viem`, and the built `apps/web` bundle contains no zod code. A global override would conflict with Hardhat's `^3.23.8` requirement. The review and revisit condition are in `docs/evidence/phase-07-security.md`.
+32. **The secret scan allowlists one public fixture.** `.gitleaks.toml` keeps the default rules and allowlists only `fixtures/qoreseal-vectors-v1.json`, whose published field names match the generic-api-key heuristic. A gitleaks 8.30.1 full-history run passes locally, but CI has not run on GitHub.
+33. **The licence check is not legal advice.** `pnpm licence-check` reads declared licence labels from the current lockfile. MPL-2.0 (lightningcss) and CC-BY-4.0 (caniuse-lite) are build-time packages with conditions recorded in `README.md` and `docs/evidence/phase-07-licences.md`; it does not prove that a package's declared licence is complete or correct.
 
 ## Repository structure
 
@@ -96,6 +99,7 @@ See `docs/ARCHITECTURE.md` (component diagram, trust boundaries, the two signing
 docs/
   ARCHITECTURE.md        components, trust boundaries, signing lanes
   THREAT_MODEL.md        threats and required mitigations
+  EVIDENCE.md            index of every evidence file and what it does not prove
   ACCEPTANCE_MATRIX.md   requirement -> implementation -> test -> evidence -> status
   SUBMISSION.md          organiser requirements -> artefact -> owner action -> status
   DEMO_SCRIPT.md         storyboard for the submission video, with blocked shots marked
@@ -112,9 +116,11 @@ packages/
   contracts/             TestUSD and LoanSettlement (local Hardhat only)
 fixtures/                raw chain responses and the QoreX hybrid signature fixture
 scripts/verify-env.mjs   toolchain version check
+scripts/check-licences.mjs  dependency licence allowlist check
 scripts/token-selector-scan.mjs  offline selector scan of the saved token bytecode
 scripts/build-manifest.mjs  reproducible deployment manifest from Hardhat artifacts
 scripts/verify-deployment.mjs  read-only post-deployment bytecode and state check
+.gitleaks.toml           secret-scan allowlist for the public QoreSeal vectors
 .github/workflows/ci.yml install, checks and secret scan
 AI_USAGE.md              AI workflow, generated areas and human contribution
 CHANGELOG.md             changes by phase
@@ -136,6 +142,8 @@ Built with the QoreChain open source kits and the libraries below. Versions are 
 | `react`, `react-dom` | 19.3.1 | MIT | The diagnostics page in `apps/web`. |
 | `vite` | 7.3.8 | MIT | Build tool for `apps/web`. |
 | `@vitejs/plugin-react` | 5.2.0 | MIT | React support in Vite. |
+| `caniuse-lite` | 1.0.30001826 | CC-BY-4.0 | Browser data used by browserslist at build time. Data from caniuse.com, used under CC-BY-4.0. |
+| `lightningcss` | 1.33.0 | MPL-2.0 | CSS minifier used by Vite at build time; used unmodified. |
 | `typescript` | 5.9.3 | Apache-2.0 | All TypeScript packages and the app. |
 | `vitest` | 5.1.0 | MIT | Unit and static tests. |
 | `@biomejs/biome` | 2.6.8 | MIT OR Apache-2.0 | Formatting and linting. |
