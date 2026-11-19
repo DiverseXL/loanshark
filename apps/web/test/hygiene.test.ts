@@ -33,16 +33,17 @@ const css = readFileSync(join(srcRoot, "app.css"), "utf8");
 
 describe("storage and key material", () => {
   const sealPanelPrefix = join("src", "seal");
-  const forbidden: Array<{ pattern: RegExp; label: string; allowIn?: string }> = [
-    { pattern: /\blocalStorage\b/, label: "localStorage" },
+  const vaultPrefix = join("src", "vault");
+  const forbidden: Array<{ pattern: RegExp; label: string; allowIn?: string | string[] }> = [
+    { pattern: /\blocalStorage\b/, label: "localStorage", allowIn: vaultPrefix },
     { pattern: /\bsessionStorage\b/, label: "sessionStorage" },
-    { pattern: /\bindexedDB\b/i, label: "IndexedDB" },
+    { pattern: /\bindexedDB\b/i, label: "IndexedDB", allowIn: vaultPrefix },
     { pattern: /\bIDBFactory\b/, label: "IDBFactory" },
     { pattern: /\bcaches\b/, label: "Cache Storage" },
     { pattern: /document\.cookie/, label: "document.cookie" },
-    // The seal account module necessarily names the generated mnemonic; no
+    // The seal account module and vault necessarily name the generated mnemonic; no
     // other source file may.
-    { pattern: /mnemonic/i, label: "mnemonic", allowIn: sealPanelPrefix },
+    { pattern: /mnemonic/i, label: "mnemonic", allowIn: [sealPanelPrefix, vaultPrefix] },
     { pattern: /seedPhrase|seed phrase/i, label: "seed phrase" },
     { pattern: /privateKey|private_key/i, label: "private key" },
     { pattern: /secretKey|secret_key/i, label: "secret key" },
@@ -56,17 +57,35 @@ describe("storage and key material", () => {
   it("has no storage API and no key-like material in apps/web/src", () => {
     for (const file of sourceFiles) {
       for (const rule of forbidden) {
-        if (rule.allowIn !== undefined && file.path.startsWith(rule.allowIn)) continue;
+        if (rule.allowIn !== undefined) {
+          const allowed = Array.isArray(rule.allowIn) ? rule.allowIn : [rule.allowIn];
+          if (allowed.some((prefix) => file.path.startsWith(prefix))) continue;
+        }
         expect(rule.pattern.test(file.text), `${rule.label} in ${file.path}`).toBe(false);
       }
     }
   });
 
-  it("names the mnemonic only in the seal panel", () => {
+  it("touches localStorage only in the vault module, to store the AEAD blob record", () => {
+    const storageFiles = sourceFiles
+      .filter((file) => /localStorage|indexedDB/i.test(file.text))
+      .map((file) => file.path);
+    expect(storageFiles).toEqual([join("src", "vault", "vault.ts")]);
+
+    const vaultFile = sourceFiles.find((file) => file.path === join("src", "vault", "vault.ts"));
+    expect(vaultFile?.text).toContain("loanshark.vault.v1");
+    expect(vaultFile?.text).toContain("AES-GCM-256-PBKDF2-SHA256");
+  });
+
+  it("names the mnemonic only in the seal panel and vault module", () => {
     const mentions = sourceFiles
       .filter((file) => /mnemonic/i.test(file.text))
-      .map((file) => file.path);
-    expect(mentions).toEqual([join("src", "seal", "SealPanel.tsx")]);
+      .map((file) => file.path)
+      .sort();
+    expect(mentions).toEqual([
+      join("src", "seal", "SealPanel.tsx"),
+      join("src", "vault", "vault.ts"),
+    ]);
   });
 });
 
@@ -174,7 +193,9 @@ describe("forbidden transaction methods", () => {
 
   it("encodes only the fixed test message for signing", () => {
     expect(TEST_MESSAGE).toBe("LOANSHARK test message, no funds");
-    const encoders = sourceFiles.filter((file) => /new TextEncoder\(\)\.encode\(/.test(file.text));
+    const encoders = sourceFiles
+      .filter((file) => !file.path.startsWith(join("src", "vault")))
+      .filter((file) => /new TextEncoder\(\)\.encode\(/.test(file.text));
     expect(encoders.map((file) => file.path)).toEqual([join("src", "App.tsx")]);
     const app = sourceFiles.find((file) => file.path === join("src", "App.tsx"));
     expect(app?.text).toContain("new TextEncoder().encode(TEST_MESSAGE)");
