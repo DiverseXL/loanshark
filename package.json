@@ -20,7 +20,13 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.8",
+    "@cosmjs/amino": "0.39.0",
+    "@cosmjs/proto-signing": "0.39.0",
+    "@loanshark/seal-account": "workspace:*",
+    "@qorechain/qoreseal": "0.1.0",
+    "@qorechain/qoresign": "0.2.0",
     "@types/node": "26.6.6",
+    "cosmjs-types": "0.11.0",
     "typescript": "5.9.3",
     "vitest": "5.1.0"
   }

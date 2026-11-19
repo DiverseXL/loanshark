@@ -178,9 +178,27 @@ importers:
       '@biomejs/biome':
         specifier: 2.6.8
         version: 2.6.8
+      '@cosmjs/amino':
+        specifier: 0.39.0
+        version: 0.39.0
+      '@cosmjs/proto-signing':
+        specifier: 0.39.0
+        version: 0.39.0
+      '@loanshark/seal-account':
+        specifier: workspace:*
+        version: link:packages/seal-account
+      '@qorechain/qoreseal':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@qorechain/qoresign':
+        specifier: 0.2.0
+        version: 0.2.0
       '@types/node':
         specifier: 26.6.6
         version: 26.6.6
+      cosmjs-types:
+        specifier: 0.11.0
+        version: 0.11.0
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -463,6 +481,24 @@ packages:
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [win32]
+
+  '@cosmjs/amino@0.39.0':
+    resolution: {integrity: sha512-56WqsZ4xbdJE4KWJTPbw7hUzePflRxRLuxoBlUsa8qIiFumpzZRW0Ycb7IloEF8wAmdgsdfrG1hSJSBlqdFE7A==}
+
+  '@cosmjs/crypto@0.39.0':
+    resolution: {integrity: sha512-ATRhSXN8w3fvUkj9xzLHwvzylDvvn4f3cC1CQwhQc2OxyzpEEFACS3wHS6iwdJJS99acV8dq+oVOYflUqI0brQ==}
+
+  '@cosmjs/encoding@0.39.0':
+    resolution: {integrity: sha512-+poEaeM8YjGNVtrHLQNWqkhEeDxapjrdpnPCT+JCRh8YNbeHEdftzZLCH5VCBSOtvo7PF0gK1B7sbQbBl6q5pQ==}
+
+  '@cosmjs/math@0.39.0':
+    resolution: {integrity: sha512-FSLy/oDF+BtOP/J60RsjL5W4MCKiCfBjSoeV5xj6qg2g8N884Ue853iuWanjqGkQJwkXCp+JbeK8Mv9j6AaYHw==}
+
+  '@cosmjs/proto-signing@0.39.0':
+    resolution: {integrity: sha512-jthQ2PA092fvrbFaZRRKuHV7awOsayjDLIBACaGIblFj9yJCcrvhFp+8YV87ia990DjKmWJc3sstHvQZ3yK/EQ==}
+
+  '@cosmjs/utils@0.39.0':
+    resolution: {integrity: sha512-h7fy7Tbcl9v8ABntp8+kqw2VmUus2HbnRJFyzTkM7byRktLtECHYNMsztwyl1rdHkzc8Nc2xs6K/56d7a+75aw==}
 
   '@esbuild/aix-ppc64@0.28.2':
     resolution: {integrity: sha512-XExcO+dvLKvVtNTibSTBej1NCAbaGhWn9Ww1ZPx80qsahhPFe/8jgWP0IchNe0F3HwkU7n8ejhH8bjonqht8mQ==}
@@ -1093,6 +1129,9 @@ packages:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
     engines: {node: '>=12'}
 
+  base64-js@1.5.1:
+    resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
+
   baseline-browser-mapping@2.11.37:
     resolution: {integrity: sha512-QYph+vfurmaxhNwi9FprfmtkT5cx2Keg8FzZ0vnjO8ukscIybVyZGMFwdllKGlTI6qyU8ck43OM9UXh+IFJihQ==}
     engines: {node: '>=6.0.0'}
@@ -1127,6 +1166,10 @@ packages:
 
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
+
+  cosmjs-types@0.11.0:
+    resolution: {integrity: sha512-kDSkgHpRTrg1413jCNehT3P21+EBxZWFMBr9JEzVfmPiNdtuwAoLAkCYo7c7i/pTakAwyHsXbxOg8kkD+AN33w==}
+    engines: {node: '>=20.19'}
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
@@ -1394,6 +1437,9 @@ packages:
   readdirp@5.1.1:
     resolution: {integrity: sha512-Kko+Y5XQ6fM+Ce3dq3m9YGxnacYZYl9cA1wZjaF3Vbry2L3i1qVg8+CAgNPsXRArPMUMCaOR7oa9Nqntc43JKA==}
     engines: {node: '>= 20.19.0'}
+
+  readonly-date-esm@2.0.0:
+    resolution: {integrity: sha512-adlyzz144ofU22kjnnRIN0HPPqIbc5IZvMmMuVtEgMY4mKgNyKqOVb4Fa2GUzE2By4TEPOYoGqDoKRyqmeEuPQ==}
 
   resolve.exports@2.0.4:
     resolution: {integrity: sha512-zepuGL0ulf+nt+XaFrlKeaiTJeyPFPLLY62+ncq1/VTHBdt3HsfXOH60priZ6tnXQozdGcDeIF5JVTanvIcYWQ==}
@@ -1775,6 +1821,42 @@ snapshots:
 
   '@biomejs/cli-win32-x64@2.6.8':
     optional: true
+
+  '@cosmjs/amino@0.39.0':
+    dependencies:
+      '@cosmjs/crypto': 0.39.0
+      '@cosmjs/encoding': 0.39.0
+      '@cosmjs/math': 0.39.0
+      '@cosmjs/utils': 0.39.0
+
+  '@cosmjs/crypto@0.39.0':
+    dependencies:
+      '@cosmjs/encoding': 0.39.0
+      '@cosmjs/math': 0.39.0
+      '@cosmjs/utils': 0.39.0
+      '@noble/ciphers': 2.4.0
+      '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
+      '@scure/bip39': 2.4.0
+
+  '@cosmjs/encoding@0.39.0':
+    dependencies:
+      '@scure/base': 2.4.0
+      base64-js: 1.5.1
+      readonly-date-esm: 2.0.0
+
+  '@cosmjs/math@0.39.0': {}
+
+  '@cosmjs/proto-signing@0.39.0':
+    dependencies:
+      '@cosmjs/amino': 0.39.0
+      '@cosmjs/crypto': 0.39.0
+      '@cosmjs/encoding': 0.39.0
+      '@cosmjs/math': 0.39.0
+      '@cosmjs/utils': 0.39.0
+      cosmjs-types: 0.11.0
+
+  '@cosmjs/utils@0.39.0': {}
 
   '@esbuild/aix-ppc64@0.28.2':
     optional: true
@@ -2264,6 +2346,8 @@ snapshots:
 
   assertion-error@2.0.1: {}
 
+  base64-js@1.5.1: {}
+
   baseline-browser-mapping@2.11.37: {}
 
   browserslist@4.29.6:
@@ -2294,6 +2378,8 @@ snapshots:
   color-name@1.1.4: {}
 
   convert-source-map@2.0.0: {}
+
+  cosmjs-types@0.11.0: {}
 
   csstype@3.2.3: {}
 
@@ -2549,6 +2635,8 @@ snapshots:
   react@19.3.1: {}
 
   readdirp@5.1.1: {}
+
+  readonly-date-esm@2.0.0: {}
 
   resolve.exports@2.0.4: {}
 
