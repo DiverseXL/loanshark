@@ -1,0 +1,28 @@
+{
+  "name": "@loanshark/seal-account",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Offline, browser-safe seal account: mnemonic-derived identity, recipient card, hybrid signing and the W/E binding statement.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@loanshark/chain-client": "workspace:*",
+    "@noble/hashes": "2.4.0",
+    "@qorechain/qoreseal": "0.1.0",
+    "@qorechain/qoresign": "0.2.0",
+    "@scure/bip39": "2.4.0"
+  },
+  "devDependencies": {}
+}

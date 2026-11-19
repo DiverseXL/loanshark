@@ -277,6 +277,24 @@ importers:
         specifier: 0.2.0
         version: 0.2.0
 
+  packages/seal-account:
+    dependencies:
+      '@loanshark/chain-client':
+        specifier: workspace:*
+        version: link:../chain-client
+      '@noble/hashes':
+        specifier: 2.4.0
+        version: 2.4.0
+      '@qorechain/qoreseal':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@qorechain/qoresign':
+        specifier: 0.2.0
+        version: 0.2.0
+      '@scure/bip39':
+        specifier: 2.4.0
+        version: 2.4.0
+
 packages:
 
   '@actions/core@3.0.1':
