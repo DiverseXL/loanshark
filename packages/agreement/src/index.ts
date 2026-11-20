@@ -29,6 +29,20 @@ export {
   TEST_ONLY_DOMAIN,
   TEST_ONLY_VERIFYING_CONTRACT,
 } from "./domain.js";
+export type {
+  EvaluationCheck,
+  Offer,
+  OfferEvaluation,
+  OfferEvaluator,
+  OfferRequest,
+} from "./offer-evaluator.js";
+export {
+  evaluateOffer,
+  LocalOfferEvaluator,
+  MAX_UINT256,
+  MINIMUM_CLAIM_WINDOW,
+  offerToTerms,
+} from "./offer-evaluator.js";
 export type { Address, Bytes32, Terms } from "./terms.js";
 export { assertTermsShape, MAX_UINT64 } from "./terms.js";
 
