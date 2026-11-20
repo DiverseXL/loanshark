@@ -24,6 +24,25 @@ Borrowers need capital without publishing their financial documents or negotiati
 
 No zero-knowledge proofs, FHE or confidential computation are used or claimed.
 
+## Confidential computing
+
+Providers were evaluated and none was adopted. Nox (iExec), Marlin Oyster TEE
+matching, Zama FHEVM, Arcium MPC, Oasis Sapphire/OPL, 0G Private Compute,
+zero-knowledge eligibility proofs and ERC-7984 confidential tokens were each
+classified NO-GO or LAB ONLY against this repository's facts: none has a verified
+Diana deployment or bridge with transaction evidence, none can be verified by this
+project's own code, and several are scoped to another chain (Solana, Sapphire,
+FHEVM, 0G's own L1). The evaluation, its read-only checks and the gates a future
+provider would have to pass are in `docs/adr/0018-confidential-computing-providers.md`.
+An attested enclave would still see plaintext inputs, so documents, phrases and
+keys never go to a compute service.
+
+What LOANSHARK does claim: QoreSeal content privacy for requests, offers and the
+agreement document, encrypted client-side for the chosen recipient; public EVM
+settlement of a labelled test token, where addresses, amounts and timing are
+public; and no private transfers. Private matching is not applicable, because a
+loan has one borrower and one lender (ADR-0008 decision 1).
+
 ## Status by milestone
 
 | Milestone | Scope | Status |
