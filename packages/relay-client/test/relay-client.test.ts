@@ -5,18 +5,19 @@
 // wrong KEM key, and binding statement for another account.
 // Verifies that failed verifications return typed refusals and NEVER data.
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RelayServer } from "@loanshark/api";
-import { RelayClient } from "../src/client.js";
 import { encodeAad, sealMlkemToRecipient, signEnvelope } from "@loanshark/qoreseal-adapter";
 import { mockAccountClient } from "@loanshark/qoreseal-adapter/testing";
 import {
   bindingStatementBytes,
   createBindingStatementFields,
+  generateSealAccount,
+  type SealAccountIdentity,
   signBindingStatement,
 } from "@loanshark/seal-account";
-import { SealAccountIdentity, generateSealAccount } from "@loanshark/seal-account";
 import { addressFromPublicKey } from "@qorechain/qoresign";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { RelayClient } from "../src/client.js";
 import type { EnvelopeRecordInput } from "../src/types.js";
 
 const CHAIN_ID = "qorechain-diana";

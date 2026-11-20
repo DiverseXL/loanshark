@@ -258,8 +258,21 @@ export class RelayClient {
     if ("getPqPublicKey" in reg) {
       const reader = reg as CardRegistryReader;
       chainId = reader.chainId;
-      const pq = await reader.getPqPublicKey(sealAddress);
-      const kem = await reader.getMlkemPublicKey(sealAddress);
+      // A registry that throws or times out is a refusal, never data.
+      let pq: Uint8Array | null;
+      let kem: Uint8Array | null;
+      try {
+        pq = await reader.getPqPublicKey(sealAddress);
+        kem = await reader.getMlkemPublicKey(sealAddress);
+      } catch (err) {
+        return {
+          ok: false,
+          refusal: "card-invalid",
+          message: `registry read failed for '${sealAddress}': ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        };
+      }
       if (!pq || !kem) {
         return {
           ok: false,

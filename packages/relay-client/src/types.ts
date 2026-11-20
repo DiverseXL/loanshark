@@ -1,6 +1,5 @@
 // Types for @loanshark/relay-client (ADR-0017).
 
-import type { PqcAccountReader } from "@loanshark/chain-client";
 import type {
   BindingRecordInput,
   CardRecordInput,
@@ -10,6 +9,7 @@ import type {
   StoredCardRecord,
   StoredEnvelopeRecord,
 } from "@loanshark/api";
+import type { PqcAccountReader } from "@loanshark/chain-client";
 
 export type {
   BindingRecordInput,
