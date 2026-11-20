@@ -7,7 +7,10 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 
 /// @title LoanSettlement
 /// @notice Local-only settlement for one-borrower, one-lender loans. The loan id
-/// is keccak256(abi.encode(terms)); the terms are immutable once proposed.
+/// is keccak256(abi.encode(block.chainid, address(this), terms)); the terms are
+/// immutable once proposed. The chain id and this contract's address are part of
+/// the preimage, so a commitment made for another chain or another deployment
+/// cannot be replayed here (ADR-0008 decision 8).
 /// @dev No admin, no upgrade path, no arbitrary calls, no collateral and no
 /// interest-rate math. Tokens are restricted to an immutable allowlist fixed at
 /// deployment. Every token movement is checked against the actual balance change.
@@ -117,8 +120,9 @@ contract LoanSettlement is ReentrancyGuard {
     // Views
     // ---------------------------------------------------------------------
 
-    /// @notice The commitment, identical to the TypeScript `commitmentOf`.
-    function commitmentOf(Terms calldata terms) external pure returns (bytes32) {
+    /// @notice The commitment, identical to the TypeScript `commitmentOf` for the
+    /// same chain id and contract address.
+    function commitmentOf(Terms calldata terms) external view returns (bytes32) {
         return _commitment(terms);
     }
 
@@ -293,8 +297,8 @@ contract LoanSettlement is ReentrancyGuard {
     // Internal
     // ---------------------------------------------------------------------
 
-    function _commitment(Terms calldata terms) private pure returns (bytes32) {
-        return keccak256(abi.encode(terms));
+    function _commitment(Terms calldata terms) private view returns (bytes32) {
+        return keccak256(abi.encode(block.chainid, address(this), terms));
     }
 
     function _totalDue(Terms storage terms) private view returns (uint256) {
