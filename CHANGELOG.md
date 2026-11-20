@@ -4,6 +4,28 @@ No release has been made. The project is built one phase at a time and each entr
 
 ## Unreleased
 
+### Step 9: relay server, encrypted local vault, binding flow
+
+Added:
+
+- `apps/api`: a loopback ciphertext relay on `node:http` with no runtime dependencies. Content-addressed immutable envelopes, public recipient cards and binding statements, an append-only JSON-lines store with atomic writes, strict schema validation, a 64 KiB body limit, a per-IP rate limit, `Host` and `Origin` allowlists, a required write header, fixed security headers, secret-named-field rejection and method/path/status-only logging. It does not verify signatures. 12 tests.
+- `packages/relay-client`: a typed client that verifies every fetched object before returning it as trusted: content address, AAD party fields and the sender's on-chain ML-DSA-87 key for envelopes; the on-chain KEM key hash for cards; both on-chain keys and the expiry window for binding statements. A failed verification is a typed refusal, never data. 5 tests.
+- `packages/relay-client/src/binding-flow.ts`: producer and verifier for the ADR-0014 statement around the existing signers. 3 tests, MOCK relay and MOCK account clients.
+- `apps/web/src/vault`: an encrypted local record for a seal account (PBKDF2-HMAC-SHA256 plus AES-256-GCM, random salt and nonce per write, explicit save, auto-lock and forget), wired into panel 6. 6 tests.
+- ADR-0015 (AAD party identity is W), ADR-0016 (encrypted local vault), ADR-0017 (relay server), threat rows T33 to T37, matrix rows C15 to C17 and H5.
+- `scripts/check-docs.mjs`, `scripts/test-counts.mjs` and `scripts/run-contract-tests.mjs`: the docs checker fails on a missing path reference, an evidence file missing from the index and a test count that disagrees with the runners; `pnpm docs:check` and a CI step run it.
+
+Changed:
+
+- `scripts/onboard-seal-account.mjs --execute` refuses a phrase that is public in this repository's tests or in common test tooling, with four new tests.
+- The docs checker's first run found and this change fixed: a reference to a `phase-07-result.md` that was never written, three evidence files missing from the index, a stale test count for the onboarding script, and counts stated without a resolvable test path.
+
+Not done:
+
+- No transaction was sent and nothing was signed live. The relay was only reached over loopback from the tests.
+- The binding flow has no owner-run tool, so C17 is PENDING and `docs/evidence/phase-09-owner-checklist.md` is blank.
+- There are no request or offer screens, no inbox UI and no app wiring for the relay.
+
 ### Step 8: seal account and W/E binding
 
 Added:

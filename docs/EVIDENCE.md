@@ -31,6 +31,7 @@ Rules used throughout:
 | `phase-08-onboarding-dry-run.md` | 2026-11-19 | Read-only network run | Offline derivation for the public test phrase and four raw Diana GET responses | TEST ONLY phrase; no transaction, no signature and no registration |
 | `phase-08-browser-panel.md` | 2026-11-19 | Build and static check | Panel 6 source shape, static hygiene checks, production build sizes, CSP and bundle budget | Not opened in a browser; the phrase-erasure claim is a UI claim, not a memory proof |
 | `phase-08-result.md` | 2026-11-19 | Phase result | What Step 8 added, measured test and build counts, and the limits that remain | Local and dry-run only; C13 and C14 are PENDING |
+| `phase-09-result.md` | 2026-11-20 | Phase result | What Step 9 added, the relay behaviour the tests record, the docs checker's findings and fixes, measured test counts split real, mock and static, and the remaining limits | Loopback and local only; no transaction, no owner-run binding, CI not run on GitHub |
 
 ## Owner-supplied files
 
@@ -41,6 +42,7 @@ Rules used throughout:
 | `phase-06-owner-deploy.md` | BLANK | The panel's JSON block and the owner's deployment record |
 | `phase-06-verify.md` | NOT RUN | The report written by `scripts/verify-deployment.mjs` after a real deployment |
 | `phase-08-owner-checklist.md` | BLANK | Fresh borrower and lender seal accounts, two dry runs, two `--execute` registrations with transaction hashes, independent read-back and the card. Binding statement fields and the W signature, with the E countersignature marked NOT PRODUCED |
+| `phase-09-owner-checklist.md` | BLANK, NOT PRODUCED | A real W/E binding statement produced with QoreX and an owner seal account, published through the relay client and verified on fetch. No owner-run tool exists yet, so the file records what the tool must do and what to capture |
 
 A blank owner file is evidence of a missing step, not of a passing one.
 

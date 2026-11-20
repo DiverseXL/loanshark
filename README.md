@@ -2,7 +2,7 @@
 
 Private financing on QoreChain: encrypted requests, separately encrypted lender offers, a verifiable agreement commitment, and real test-token settlement.
 
-> Status: Phase 4 (browser diagnostics app and QoreX read/sign-message layer, local only), plus Step 6a submission preparation, Step 6b deployment readiness for Diana, Step 7 local hardening and evidence packing, and Step 8 seal-account onboarding. This repository contains the architecture, threat model, decision records and source lock from Phase 0, a hybrid signature verifier in `packages/chain-client`, an offline QoreSeal adapter in `packages/qoreseal-adapter`, a browser-safe seal-account package in `packages/seal-account`, an agreement package in `packages/agreement`, a local Hardhat settlement package in `packages/contracts`, and a client-only diagnostics app in `apps/web` with an owner-run testnet deployment panel and an in-memory seal-account panel. The on-chain ML-KEM registration path is no longer blocked in source: a separate app-held account E can register its own keys through an owner-run script, but no registration has been executed by this repository. The adapter still uses explicit mlkem mode only. No contract has been deployed by this repository or the assistant, and there is no product app or API. Every claim below is either backed by a link into `docs/` or marked as not yet built.
+> Status: Phase 4 (browser diagnostics app and QoreX read/sign-message layer, local only), plus Step 6a submission preparation, Step 6b deployment readiness for Diana, Step 7 local hardening and evidence packing, Step 8 seal-account onboarding, and Step 9 (a loopback ciphertext relay, an encrypted local vault for the seal account and the binding-flow library). This repository contains the architecture, threat model, decision records and source lock from Phase 0, a hybrid signature verifier in `packages/chain-client`, an offline QoreSeal adapter in `packages/qoreseal-adapter`, a browser-safe seal-account package in `packages/seal-account`, an agreement package in `packages/agreement`, a local Hardhat settlement package in `packages/contracts`, and a client-only diagnostics app in `apps/web` with an owner-run testnet deployment panel and an in-memory seal-account panel. The on-chain ML-KEM registration path is no longer blocked in source: a separate app-held account E can register its own keys through an owner-run script, but no registration has been executed by this repository. The adapter still uses explicit mlkem mode only. No contract has been deployed by this repository or the assistant, and there is no product app; the only API is a loopback relay that stores ciphertext and public records. Every claim below is either backed by a link into `docs/` or marked as not yet built.
 
 Built for the QoreChain hackathon, Encrypted Apps category. Target network: QoreChain Diana Testnet (`qorechain-diana`). Testnet only; not a regulated lending service.
 
@@ -30,9 +30,10 @@ No zero-knowledge proofs, FHE or confidential computation are used or claimed.
 |---|---|---|
 | M0 | Protocol reconnaissance, ADRs, source lock | In progress. Evidence in `docs/evidence/phase-00-result.md` and `docs/evidence/phase-01-result.md`. M0-3, M0-5 and M0-7 are DONE; M0-4 is in progress (explorer and faucet recorded from the organiser's start page, not loaded); M0-6 is UNBLOCKED (a source-backed owner-run path exists, not yet exercised live) |
 | M1 | Cryptographic vertical slice | Offline slice built and tested: `packages/qoreseal-adapter` (seal/open in explicit mlkem mode, canonical AAD, signed envelopes), with the official QoreSeal 0.1.0 vectors passing. Step 8 adds `packages/seal-account`: a mnemonic-derived app-held account E with ML-DSA-87, ML-KEM-1024, a signed recipient card and a W/E binding statement, all tested offline. On-chain registration is implemented in an owner-run script and dry-run only; the adapter still exposes mlkem mode only (ADR-0004, ADR-0014). Evidence in `docs/evidence/phase-02-result.md` and `docs/evidence/phase-08-result.md` |
-| M2 | Private request and offer workflow | Not started |
+| M2 | Private request and offer workflow | Not started. Step 9 added the transport it will use: an immutable ciphertext relay (`apps/api`), a verifying client (`packages/relay-client`) and the W/E binding producer and verifier. There are no request or offer screens, no inbox UI and no sealing flow in the app. Evidence in `docs/evidence/phase-09-result.md` |
 | M3 | Agreement commitment | Local: terms, `keccak256(abi.encode(terms))` commitment, canonical agreement text and signed confirmation. `packages/agreement/test/*` (15 tests). Evidence in `docs/evidence/phase-03-result.md` |
 | M4 | Test token and settlement contracts | Deployment-ready, not deployed. `TestUSD` and `LoanSettlement` run on the in-process Hardhat network, `packages/contracts/test` (38 tests), including the ADR-0013 Option A two-token constructor and a full lifecycle in `TestUSD` and in a MOCK fUSD-profile token. A reproducible manifest (`docs/deployments/manifest.json`) pins the bytecode hashes, and `apps/web` has an owner-run, click-only deploy panel. No deployment exists; C12 is PENDING. Evidence in `docs/evidence/phase-03-result.md`, `docs/evidence/phase-03b-result.md` and `docs/evidence/phase-06-result.md` |
+| M8 | Relay, local vault and binding transport | Local only. The relay binds to `127.0.0.1`, stores content-addressed ciphertext, cards and binding statements, never decrypts, never verifies signatures and refuses secret-named fields; the vault keeps one AES-256-GCM record unlocked by a passphrase; the binding flow produces and verifies the ADR-0014 statement. No owner-run binding tool exists. Evidence in `docs/evidence/phase-09-result.md` and the blank checklist `docs/evidence/phase-09-owner-checklist.md` |
 | M5 | Hybrid authorisation and wallet flow | Partial, local only: `apps/web` detects QoreX, guards both chain IDs and signs one fixed message on explicit button press, verifying it locally with the post-quantum part required. No EVM window, no transaction and no EVM authorisation flow. Owner-run browser evidence is pending. Evidence in `docs/evidence/phase-04-result.md` and the blank checklist in `docs/evidence/phase-04-owner-checklist.md` |
 | M6 | Integrated UI | Not started |
 | M7 | Hardening and evidence pack | Local: dependency licence allowlist enforced in CI, full-history secret scan with a one-file reviewable allowlist, dependency audit recorded with one accepted advisory, evidence index and docs consistency pass. CI has not run on GitHub; owner-run browser and deployment evidence remain blank. Evidence in `docs/EVIDENCE.md`, `docs/evidence/phase-07-licences.md` and `docs/evidence/phase-07-security.md` |
@@ -101,7 +102,13 @@ See `docs/ARCHITECTURE.md` (component diagram, trust boundaries, the two signing
 37. **A phrase in a page or terminal cannot be proven erased.** The panel clears its state and warns the owner, and the script never writes the phrase to its report, but JavaScript memory, terminal scrollback, XSS, an extension or a malicious dependency can retain it while it is exposed. Phrase exposure burns the account; the owner checklist forbids sending any phrase to the assistant. `scripts/gen-test-mnemonic.mjs` prints a random throwaway phrase for test vectors and must never be used for an owner account.
 38. **The browser seal panel was not driven in a real browser.** Its state transitions, `crypto.getRandomValues` behaviour and the production CSP were checked by build and static tests, not by a browser run. The 600 KiB JavaScript budget is a project ASSUMPTION, not a browser or QoreChain limit.
 39. **The web bundle grew to fit post-quantum code.** ML-DSA-87, ML-KEM-1024 and hybrid signing are bundled for panel 6, taking the production JavaScript to about 480 KB (151.59 kB gzip) against the project budget. It is under budget but not optimised or lazily loaded; the page now loads cryptography a user may never use.
-40. **Every Step 8 live result is owner-supplied and blank.** The dry run used the public all-zero test phrase from the tests, not an owner account. `possession_proven` and `created_at_height` were recorded as observations and not interpreted. `docs/evidence/phase-08-owner-checklist.md` has no result filled in.
+40. **The relay does not verify signatures.** `apps/api` is an untrusted transport: it can be spammed with junk and with records whose signatures do not verify, and it does not authenticate senders. Clients verify every fetched object before use, so garbage is rejected there and not at the server. ADR-0017.
+41. **The relay sees routing metadata.** It sees sender and recipient `qor1` addresses, the loan reference, envelope sizes, record times and the client IP. Amounts and terms are inside the ciphertext; who talked to whom, when, and how much data, is not private.
+42. **The relay is local only.** It binds to `127.0.0.1`, has no TLS, no authentication and no deployment, and stores records in a JSON-lines file with an in-memory index. Nothing about its behaviour under load or across restarts beyond the tests has been measured.
+43. **The vault protects against casual local access only.** A sealed record in browser storage can be attacked offline with a guessed passphrase, and a compromised browser, XSS, a malicious extension or an injected script can read the phrase while the account is unlocked. Losing the passphrase loses the seal account; there is no recovery. ADR-0016.
+44. **Nothing persists unless the owner clicks save.** The seal account exists in memory per page load; the vault write is explicit, the lock clears memory, and forget deletes the record. There is no automatic save and no backup.
+45. **The binding flow has no owner-run tool.** The producer and verifier are library code with MOCK relays and MOCK account clients; no real QoreX signature has been combined with a real seal-account countersignature, so C17 is PENDING and `docs/evidence/phase-09-owner-checklist.md` is blank.
+46. **Every Step 8 live result is owner-supplied and blank.** The dry run used the public all-zero test phrase from the tests, not an owner account. `possession_proven` and `created_at_height` were recorded as observations and not interpreted. `docs/evidence/phase-08-owner-checklist.md` has no result filled in.
 
 ## Repository structure
 
@@ -118,12 +125,14 @@ docs/
   research/source-lock.md  every external claim, its source, and how it was confirmed
   evidence/              dated, unedited results of each phase
 apps/
-  web/                   client-only diagnostics page and owner-run deploy panel (Vite, React)
+  web/                   client-only diagnostics page, owner-run deploy panel and seal vault
+  api/                   loopback ciphertext relay (node:http, JSON-lines store)
 packages/
   chain-client/          QoreChain reads and hybrid message verification
   qoreseal-adapter/      offline QoreSeal wrapper, canonical AAD and signed envelopes
   seal-account/          browser-safe seal account E: identity, card, hybrid signing, W/E binding
   agreement/             terms, commitment, canonical text and confirmation message
+  relay-client/          typed, verifying client for the relay and the binding flow
   contracts/             TestUSD and LoanSettlement (local Hardhat only)
 fixtures/                raw chain responses and the QoreX hybrid signature fixture
 scripts/verify-env.mjs   toolchain version check
@@ -134,6 +143,9 @@ scripts/verify-deployment.mjs  read-only post-deployment bytecode and state chec
 scripts/onboard-seal-account.mjs  owner-run seal-account dry run and key registration
 scripts/gen-test-mnemonic.mjs  throwaway TEST ONLY phrase generator, never for an owner account
 scripts/check-web-bundle.mjs  production bundle size and CSP budget check
+scripts/check-docs.mjs   docs path, evidence listing and test-count checker
+scripts/test-counts.mjs  reads the runner reports that the docs checker compares
+scripts/run-contract-tests.mjs  runs the Hardhat suite and records its count
 .gitleaks.toml           secret-scan allowlist for the public QoreSeal vectors
 .github/workflows/ci.yml install, checks and secret scan
 AI_USAGE.md              AI workflow, generated areas and human contribution
