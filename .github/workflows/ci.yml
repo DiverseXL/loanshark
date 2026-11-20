@@ -32,6 +32,10 @@ jobs:
       # Hardhat suite runs on an in-process EVM and downloads the pinned solc
       # compiler. Live-chain tests are skipped unless LIVE_CHAIN=1.
       - run: pnpm test
+      # Reads the runner reports written by `pnpm test`, then fails when a doc
+      # path, an evidence listing or a stated test count disagrees with them.
+      - run: pnpm test-counts
+      - run: pnpm docs:check
 
   secrets:
     name: secret scan

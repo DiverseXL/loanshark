@@ -4,6 +4,8 @@ import {
   ALLOWED_REST,
   assertExecuteConfirmation,
   assertNoSecret,
+  assertNotKnownTestPhrase,
+  KNOWN_TEST_PHRASES,
   parseArgs,
   redactText,
   reportName,
@@ -106,6 +108,30 @@ describe("redaction and confirmation", () => {
     expect(() => assertExecuteConfirmation(`REGISTER ${address}x`, address)).toThrow(
       /did not match/,
     );
+  });
+});
+
+describe("public test phrase guard", () => {
+  it("refuses every known public test phrase", () => {
+    expect(KNOWN_TEST_PHRASES.length).toBeGreaterThanOrEqual(2);
+    for (const phrase of KNOWN_TEST_PHRASES) {
+      expect(() => assertNotKnownTestPhrase(phrase)).toThrow(/public test phrase/);
+    }
+  });
+
+  it("refuses the all-abandon phrase used by the repository tests", () => {
+    expect(() => assertNotKnownTestPhrase(PHRASE)).toThrow(/public test phrase/);
+  });
+
+  it("normalises whitespace before comparing", () => {
+    expect(() => assertNotKnownTestPhrase(`  ${PHRASE.replace(/ /g, "  ")}\n`)).toThrow(
+      /public test phrase/,
+    );
+  });
+
+  it("allows a phrase that is not on the list", () => {
+    const other = "legal winner thank year wave sausage worth useful legal winner thank yellow";
+    expect(assertNotKnownTestPhrase(other)).toBe(other);
   });
 });
 

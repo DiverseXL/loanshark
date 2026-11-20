@@ -27,6 +27,15 @@ export const ALLOWED_CHAIN_ID = "qorechain-diana";
 export const ALLOWED_REST = "https://api-testnet.qore.host";
 export const REPORT_DIRECTORY = "fixtures-out";
 
+// Public BIP-39 phrases that appear in this repository's tests, docs and in
+// common test tooling. Anyone can derive their keys, so `--execute` must never
+// register a key for them. Comparison is on the normalised phrase, which fixes
+// one derived address per chain ID.
+export const KNOWN_TEST_PHRASES = [
+  "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+  "test test test test test test test test test test test junk",
+];
+
 const HELP = `LOANSHARK seal account onboarding (owner-run)
 
 Usage:
@@ -39,7 +48,7 @@ Options:
   --execute   Register a missing ML-DSA-87 key (classicalOnly) and a missing or
               changed ML-KEM-1024 key (hybrid). Requires typing an exact
               confirmation and a terminal on stdin. Signs and broadcasts only
-              on qorechain-diana.
+              on qorechain-diana. Refused for any public test phrase.
   --help, -h  Print this text.
 
 Environment:
@@ -88,6 +97,22 @@ export function resolveConfig(env) {
     );
   }
   return { chainId, rest, mnemonic: normalize(raw) };
+}
+
+/**
+ * Refuses --execute for a phrase that is public in this repository or in common
+ * test tooling. A known phrase has a known address, so registering it would
+ * publish the owner's intent to use a phrase anyone can spend from.
+ */
+export function assertNotKnownTestPhrase(mnemonic) {
+  const normalised = normalize(String(mnemonic));
+  const match = KNOWN_TEST_PHRASES.find((phrase) => normalize(phrase) === normalised);
+  if (match) {
+    throw new Error(
+      "refusing --execute: this phrase is a public test phrase published in this repository; use a freshly generated seal account phrase",
+    );
+  }
+  return normalised;
 }
 
 /** Removes the phrase from any text before it is printed or written. */
@@ -218,6 +243,8 @@ async function main() {
         `"pnpm --filter @loanshark/seal-account build" first (${error.message})`,
     );
   });
+
+  if (options.execute) assertNotKnownTestPhrase(config.mnemonic);
 
   const { SealAccountIdentity } = packages.sealAccount;
   const { addressFromPublicKey, toHex } = packages.qoresign;

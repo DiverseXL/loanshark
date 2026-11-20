@@ -75,7 +75,7 @@ Revisit condition: when Hardhat or viem/abitype resolve a patched `zod`, update 
 
 ## 3. Static checks already in the test suite
 
-The Phase 4 static tests were rerun as part of `pnpm test` (results in `docs/evidence/phase-07-result.md`). They cover:
+The Phase 4 static tests were rerun as part of `pnpm test` (the reproduce commands are in `docs/EVIDENCE.md`). They cover:
 
 - no `localStorage`, `sessionStorage`, IndexedDB, Cache Storage, cookies, analytics or key-like material in `apps/web/src`;
 - no raw-transaction, broadcast, account-request, key-management or extra signing method; `eth_sendTransaction` only in `src/deploy/flow.ts`, called from the panel's click handler;

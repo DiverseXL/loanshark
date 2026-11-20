@@ -15,7 +15,9 @@
     "lint": "biome lint .",
     "format:check": "biome format .",
     "typecheck": "pnpm -r --if-present typecheck",
-    "test": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build && pnpm --filter @loanshark/seal-account build && pnpm --filter @loanshark/api build && pnpm --filter @loanshark/relay-client build && vitest run && pnpm --filter @loanshark/contracts test",
+    "test": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build && pnpm --filter @loanshark/seal-account build && pnpm --filter @loanshark/api build && pnpm --filter @loanshark/relay-client build && vitest run --reporter=default --reporter=json --outputFile=.tmp/vitest-report.json && node scripts/run-contract-tests.mjs",
+    "test-counts": "node scripts/test-counts.mjs",
+    "docs:check": "node scripts/check-docs.mjs",
     "build": "pnpm -r --if-present build"
   },
   "devDependencies": {
