@@ -1,6 +1,11 @@
 {
-  "version": 1,
-  "note": "Frozen agreement vectors. Generated once on 2026-11-17 from @loanshark/agreement with the pinned viem 2.57.11, then locked. Do not regenerate to make a test pass.",
+  "version": 2,
+  "domain": {
+    "chainId": 9800,
+    "verifyingContract": "0x000000000000000000000000000000000000c0de",
+    "note": "TEST ONLY. No contract is deployed at this address. The vectors pin the domain-separated commitment for chain 9800."
+  },
+  "note": "Frozen agreement vectors, regenerated once on 2026-11-20 for the domain-separated commitment (ADR-0008 decision 8, ADR-0010) with the pinned viem 2.57.11, then locked. Do not regenerate to make a test pass.",
   "termsEncoding": "uint256 and uint64 fields are decimal strings; addresses and salts are lowercase 0x hex.",
   "vectors": [
     {
@@ -17,7 +22,7 @@
         "claimDeadline": "1795000000",
         "salt": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       },
-      "loanId": "0x05b950ef2dee5494d9d81aec7a211cd65353c1fca9811c59f1a80bd0aefcd082",
+      "loanId": "0x10e69479dba0d1feb125538ff3ccafc6df1a5bd498557e0674f31a8727feb458",
       "agreementHash": "0x298ebb93b07b1355469dd6e787fe32c73a61e1c68003c0c9b99efe2b29f41e50",
       "agreementText": "LOANSHARK AGREEMENT v1\nborrower: 0x1111111111111111111111111111111111111111\nlender: 0x2222222222222222222222222222222222222222\ntoken: 0x3333333333333333333333333333333333333333\nprincipal: 1000000\ninterest: 50000\ndueDate: 1800000000\ngraceSeconds: 259200\nfundingDeadline: 1790000000\nclaimDeadline: 1795000000\nsalt: 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     },
@@ -35,7 +40,7 @@
         "claimDeadline": "1795000000",
         "salt": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
       },
-      "loanId": "0xddde3e328e35507cd6b42ba94cf7b0539ab1846f199a2c0131791b1681cbeef4",
+      "loanId": "0x486d4fe075f97d1a9049af2aef3ba60a594868d96f8200cd3678c46eb4c10843",
       "agreementHash": "0x48a961d9748e58247e4950ec3e14591e03b22bad89fd4387030dd7f527c304da",
       "agreementText": "LOANSHARK AGREEMENT v1\nborrower: 0x1111111111111111111111111111111111111111\nlender: 0x2222222222222222222222222222222222222222\ntoken: 0x3333333333333333333333333333333333333333\nprincipal: 1000000\ninterest: 0\ndueDate: 1800000000\ngraceSeconds: 0\nfundingDeadline: 1790000000\nclaimDeadline: 1795000000\nsalt: 0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
     },
@@ -53,7 +58,7 @@
         "claimDeadline": "1860000000",
         "salt": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
       },
-      "loanId": "0x9b082f9b0cc727e870ad0698a5556fb864254a1dd061a4f20eaa59ac1bfa9b09",
+      "loanId": "0x51927219334d60b838ac4f2faf38c66a3956ef55e5efc3eed9cda4974a3fedfb",
       "agreementHash": "0x2e9d0d0209b90755acdca813359261d8eccb0924a5ee8a3383fb4d67ea2bf8b1",
       "agreementText": "LOANSHARK AGREEMENT v1\nborrower: 0x4444444444444444444444444444444444444444\nlender: 0x5555555555555555555555555555555555555555\ntoken: 0x6666666666666666666666666666666666666666\nprincipal: 123456789012345678901\ninterest: 9876543210987654321\ndueDate: 1900000000\ngraceSeconds: 86400\nfundingDeadline: 1850000000\nclaimDeadline: 1860000000\nsalt: 0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
     },
@@ -71,7 +76,7 @@
         "claimDeadline": "1795000000",
         "salt": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
       },
-      "loanId": "0xd5e0474de348b0bcaabfadbe848dcdaf226bfec8ca14b7208977ab6e4cfcedb1",
+      "loanId": "0x8a5efbe9860797b4945239fa1f80b0ee3081be21ed10dce6f06d51299142d5b1",
       "agreementHash": "0x389629547eda97b2a0ab43516aea8a908dbd2b509c805bf2c5ba227a12533cda",
       "agreementText": "LOANSHARK AGREEMENT v1\nborrower: 0x1111111111111111111111111111111111111111\nlender: 0x2222222222222222222222222222222222222222\ntoken: 0x3333333333333333333333333333333333333333\nprincipal: 1000000\ninterest: 50000\ndueDate: 1800000000\ngraceSeconds: 259200\nfundingDeadline: 1790000000\nclaimDeadline: 1795000000\nsalt: 0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
     },
@@ -89,7 +94,7 @@
         "claimDeadline": "1797000000",
         "salt": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
       },
-      "loanId": "0xffa34e042157ca16d6c5f7b832cfee3504a24130305a1696755444444faa794f",
+      "loanId": "0xa47358c6ca6e384127868568d1733f052822c93ff2c7131f8141b1727975eac8",
       "agreementHash": "0xcefebea1d003e275c4db500f07bf6f1b0e3a7c00da643dd6377fe179e0d3f93c",
       "agreementText": "LOANSHARK AGREEMENT v1\nborrower: 0x7777777777777777777777777777777777777777\nlender: 0x8888888888888888888888888888888888888888\ntoken: 0x9999999999999999999999999999999999999999\nprincipal: 2000000\ninterest: 100000\ndueDate: 1810000000\ngraceSeconds: 172800\nfundingDeadline: 1792000000\nclaimDeadline: 1797000000\nsalt: 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
     }
