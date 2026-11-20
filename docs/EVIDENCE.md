@@ -31,6 +31,7 @@ Rules used throughout:
 | `phase-08-onboarding-dry-run.md` | 2026-11-19 | Read-only network run | Offline derivation for the public test phrase and four raw Diana GET responses | TEST ONLY phrase; no transaction, no signature and no registration |
 | `phase-08-browser-panel.md` | 2026-11-19 | Build and static check | Panel 6 source shape, static hygiene checks, production build sizes, CSP and bundle budget | Not opened in a browser; the phrase-erasure claim is a UI claim, not a memory proof |
 | `phase-08-result.md` | 2026-11-19 | Phase result | What Step 8 added, measured test and build counts, and the limits that remain | Local and dry-run only; C13 and C14 are PENDING |
+| `phase-09b-result.md` | 2026-11-20 | Phase result | Provider evaluation, the domain-separated commitment with old and new vector hashes, the manifest rebuild, the offer evaluator, the preflight and its Hardhat results, the footprint drift test, fail-closed coverage | Local and loopback only; read-only Diana smoke calls; no transaction and no owner-run binding |
 | `phase-09-result.md` | 2026-11-20 | Phase result | What Step 9 added, the relay behaviour the tests record, the docs checker's findings and fixes, measured test counts split real, mock and static, and the remaining limits | Loopback and local only; no transaction, no owner-run binding, CI not run on GitHub |
 
 ## Owner-supplied files
