@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { commitmentOf, encodeCommitment, encodeTerms } from "../src/commitment.js";
 import type { Terms } from "../src/terms.js";
-import { commitmentOf, encodeTerms } from "../src/commitment.js";
 import { agreementHashOf, canonicalAgreementText } from "../src/text.js";
 
 const FIXTURES = fileURLToPath(new URL("../../../fixtures/", import.meta.url));
@@ -29,11 +29,19 @@ interface AgreementVector {
   agreementText: string;
 }
 
-const VECTORS = (
-  JSON.parse(readFileSync(join(FIXTURES, "agreement-vectors.json"), "utf8")) as {
-    vectors: AgreementVector[];
-  }
-).vectors;
+const FILE = JSON.parse(readFileSync(join(FIXTURES, "agreement-vectors.json"), "utf8")) as {
+  version: number;
+  domain: { chainId: number; verifyingContract: `0x${string}`; note: string };
+  vectors: AgreementVector[];
+};
+
+const VECTORS = FILE.vectors;
+
+/** The frozen domain, read from the vectors so the file is the anchor. */
+const DOMAIN = {
+  chainId: BigInt(FILE.domain.chainId),
+  verifyingContract: FILE.domain.verifyingContract,
+};
 
 const termsFrom = (raw: VectorTerms): Terms => ({
   borrower: raw.borrower as `0x${string}`,
@@ -67,39 +75,83 @@ const FIELD_CASES: Array<[string, Terms]> = [
 
 describe("commitmentOf", () => {
   it("is deterministic and matches the ABI-encoded terms", () => {
-    expect(commitmentOf(BASE)).toBe(commitmentOf(BASE));
+    expect(commitmentOf(BASE, DOMAIN)).toBe(commitmentOf(BASE, DOMAIN));
     expect(encodeTerms(BASE)).toBe(encodeTerms(BASE));
-    expect(commitmentOf(BASE)).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(encodeCommitment(BASE, DOMAIN)).toBe(encodeCommitment(BASE, DOMAIN));
+    expect(commitmentOf(BASE, DOMAIN)).toMatch(/^0x[0-9a-f]{64}$/);
   });
 
   it("changes when any one of the ten fields changes", () => {
-    const baseCommitment = commitmentOf(BASE);
+    const baseCommitment = commitmentOf(BASE, DOMAIN);
     for (const [name, mutated] of FIELD_CASES) {
-      expect(commitmentOf(mutated), `${name} did not change the commitment`).not.toBe(
+      expect(commitmentOf(mutated, DOMAIN), `${name} did not change the commitment`).not.toBe(
         baseCommitment,
       );
     }
   });
 
   it("gives a different loan id for a wrong salt, borrower, lender or token", () => {
-    const baseCommitment = commitmentOf(BASE);
+    const baseCommitment = commitmentOf(BASE, DOMAIN);
     for (const [name, mutated] of FIELD_CASES.filter(([name]) =>
       ["salt", "borrower", "lender", "token"].includes(name),
     )) {
-      expect(commitmentOf(mutated), `${name} did not change the loan id`).not.toBe(baseCommitment);
+      expect(commitmentOf(mutated, DOMAIN), `${name} did not change the loan id`).not.toBe(
+        baseCommitment,
+      );
     }
+  });
+
+  it("gives a different loan id under a different chain id", () => {
+    const other = { ...DOMAIN, chainId: DOMAIN.chainId + 1n };
+    expect(commitmentOf(BASE, other)).not.toBe(commitmentOf(BASE, DOMAIN));
+  });
+
+  it("gives a different loan id under a different verifying contract", () => {
+    const other = {
+      ...DOMAIN,
+      verifyingContract: "0x000000000000000000000000000000000000bEEF" as `0x${string}`,
+    };
+    expect(commitmentOf(BASE, other)).not.toBe(commitmentOf(BASE, DOMAIN));
+  });
+
+  it("prepends the chain id word and the address word before the terms", () => {
+    const encoded = encodeCommitment(BASE, DOMAIN);
+    const terms = encodeTerms(BASE);
+    expect(encoded.endsWith(terms.slice(2))).toBe(true);
+    expect(encoded.slice(0, 66)).toBe(`0x${DOMAIN.chainId.toString(16).padStart(64, "0")}`);
+    expect(encoded.slice(66, 130)).toBe(
+      `000000000000000000000000${DOMAIN.verifyingContract.slice(2).toLowerCase()}`,
+    );
   });
 
   it("matches every frozen vector", () => {
     for (const vector of VECTORS) {
       const terms = termsFrom(vector.terms);
-      expect(commitmentOf(terms), vector.name).toBe(vector.loanId);
+      expect(commitmentOf(terms, DOMAIN), vector.name).toBe(vector.loanId);
     }
   });
 
-  it("rejects malformed addresses and salt", () => {
-    expect(() => commitmentOf(changed({ borrower: "0x1234" as `0x${string}` }))).toThrow(TypeError);
-    expect(() => commitmentOf(changed({ salt: "0x1234" as `0x${string}` }))).toThrow(TypeError);
+  it("rejects malformed addresses, salt, chain id and verifying contract", () => {
+    expect(() => commitmentOf(changed({ borrower: "0x1234" as `0x${string}` }), DOMAIN)).toThrow(
+      TypeError,
+    );
+    expect(() => commitmentOf(changed({ salt: "0x1234" as `0x${string}` }), DOMAIN)).toThrow(
+      TypeError,
+    );
+    expect(() => commitmentOf(BASE, { ...DOMAIN, chainId: -1n })).toThrow(TypeError);
+    expect(() =>
+      commitmentOf(BASE, { ...DOMAIN, verifyingContract: "0x1234" as `0x${string}` }),
+    ).toThrow(TypeError);
+  });
+});
+
+describe("frozen vectors file", () => {
+  it("is version 2 and labels its verifying contract TEST ONLY", () => {
+    expect(FILE.version).toBe(2);
+    expect(FILE.domain.chainId).toBe(9800);
+    expect(FILE.domain.verifyingContract).toBe("0x000000000000000000000000000000000000c0de");
+    expect(FILE.domain.note).toContain("TEST ONLY");
+    expect(FILE.domain.note).toContain("No contract is deployed");
   });
 });
 
@@ -128,5 +180,9 @@ describe("canonical agreement text", () => {
         baseHash,
       );
     }
+  });
+
+  it("does not depend on the settlement domain", () => {
+    expect(agreementHashOf(BASE)).toBe(agreementHashOf({ ...BASE }));
   });
 });

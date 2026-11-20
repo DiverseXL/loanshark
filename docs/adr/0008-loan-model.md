@@ -41,8 +41,11 @@ units. This ADR fixes the model before any contract or TypeScript code exists.
    deployment is intended to contain only this project's labelled test token.
    The `Fest` tokens found on the test account are not used because their
    provenance is unverified. (Owner confirmed in chat on 2026-11-17.)
-8. The commitment is `keccak256(abi.encode(terms))`, computed on-chain, and the
-   loan id is the commitment. (Owner confirmed in chat on 2026-11-17.)
+8. The commitment is `keccak256(abi.encode(block.chainid, address(this),
+   terms))`, computed on-chain, and the loan id is the commitment. (Owner
+   confirmed in chat on 2026-11-17 for the terms-only form; amended 2026-11-20
+   with the owner's approval in the Step 9b brief to add the chain id and the
+   verifying contract address. Nothing is deployed, so no on-chain id changes.)
 9. The claim window is at least 3600 seconds: `claimDeadline` must be at least
    `fundingDeadline + 3600`. (Owner confirmed N = 3600 in chat on 2026-11-17.)
    This is a project guard against a borrower being given no time to claim;
@@ -68,13 +71,27 @@ struct Terms {
 
 Field order is fixed and is part of the commitment. `abi.encode` is used, not
 `abi.encodePacked`, so addresses are 32-byte words and cannot collide with
-adjacent fields. `loanId = keccak256(abi.encode(...))`.
+adjacent fields. The preimage is two words followed by the ten-field tuple:
+
+```solidity
+loanId = keccak256(abi.encode(block.chainid, address(this), terms));
+```
+
+Why domain-separated (Step 9b): the same terms proposed by the same two parties
+must not produce the same id on another chain or at another `LoanSettlement`
+address. Without the prefix, a signed agreement confirmation for one deployment
+would be valid for a second deployment, and a testnet loan id would equal a
+mainnet loan id. The cost is that `commitmentOf` is now a `view` function
+instead of `pure`, because it reads `block.chainid` and `address(this)`.
 
 The same ten fields are mirrored in TypeScript in `packages/agreement`, with
 `address` as a 20-byte hex string, `uint256` and `uint64` as `bigint`, and
-`salt` as a 32-byte hex string. The Solidity view function `commitmentOf(Terms)`
-and the TypeScript `commitmentOf(terms)` must produce identical bytes32 values;
-that equality is tested against frozen vectors.
+`salt` as a 32-byte hex string. The TypeScript `commitmentOf(terms, domain)`
+takes the EVM chain id (as a `bigint`) and the verifying contract address, and
+must produce the same bytes32 as the Solidity view function for the same domain.
+The equality is tested in Hardhat against the test deployment's own chain id and
+address; the frozen vectors in `fixtures/agreement-vectors.json` pin the
+TypeScript output for chain 9800 and a clearly labelled TEST ONLY address.
 
 Validation at `proposeLoan` (all are `ASSUMPTION`s unless listed as a
 decision):
@@ -163,8 +180,9 @@ owner only for minting the test token; that owner has no power over any loan.
 
 ## Invariants
 
-1. `loanId == keccak256(abi.encode(terms))` for every stored loan, and the
-   stored terms never change.
+1. `loanId == keccak256(abi.encode(block.chainid, address(this), terms))` for
+   every stored loan computed at this chain and address, and the stored terms
+   never change.
 2. A loan id is proposed at most once, ever, including after a terminal state.
 3. State changes only along the transition table above.
 4. Only the borrower can `proposeLoan`, `claim` and `repay`; only the lender

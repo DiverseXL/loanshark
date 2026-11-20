@@ -5,34 +5,48 @@
 //
 // Message format, exactly:
 //
-//   loanshark/v1/agreement|<0x loanId>|<0x agreementHash>
+//   loanshark/v2/agreement|<chainId>|<0x verifyingContract>|<0x loanId>|<0x agreementHash>
 //
-// The chain id is not in this string because QoreSign prefixes every signed
-// message with `qorechain-msg-v1|<chainId>|`; a signature for one chain does not
-// verify for another. ASSUMPTION: the domain tag, the field order and the
-// 0x-prefixed lowercase hex encoding are this project's format (ADR-0010).
+// Version 2 (Step 9b) adds the EVM chain id and the verifying contract address,
+// so a confirmation signed for one `LoanSettlement` deployment cannot be used
+// for another, and the same terms on another chain produce a different message.
+// The QoreSign prefix `qorechain-msg-v1|<chainId>|` still binds the native chain
+// id to the signature; that is a separate value from the EVM chain id here.
+// ASSUMPTION: the domain tag, the field order and the 0x-prefixed lowercase hex
+// encoding are this project's format (ADR-0010).
 
 import type { PqcAccountReader, VerifyHybridMessageResult } from "@loanshark/chain-client";
 import { verifyHybridMessage } from "@loanshark/chain-client";
 import type { MessageSigner } from "@loanshark/qoreseal-adapter";
 import type { Hex } from "viem";
+import type { CommitmentDomain } from "./commitment.js";
 import { commitmentOf } from "./commitment.js";
+import type { Address, Terms } from "./terms.js";
 import { agreementHashOf } from "./text.js";
-import type { Terms } from "./terms.js";
 
 /** Domain tag that opens the confirmation message. */
-export const CONFIRMATION_DOMAIN = "loanshark/v1/agreement";
+export const CONFIRMATION_DOMAIN = "loanshark/v2/agreement";
 
 const BYTES32_PATTERN = /^0x[0-9a-fA-F]{64}$/;
+const ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 const requireBytes32 = (name: string, value: string): string => {
   if (!BYTES32_PATTERN.test(value)) throw new TypeError(`${name} is not a 32-byte hex value`);
   return value.toLowerCase();
 };
 
-/** The two hashes both parties confirm. */
+const requireAddress = (name: string, value: string): string => {
+  if (!ADDRESS_PATTERN.test(value)) throw new TypeError(`${name} is not a 20-byte address`);
+  return value.toLowerCase();
+};
+
+/** The hashes and the domain both parties confirm. */
 export interface AgreementConfirmation {
-  /** The on-chain loan id, which is the terms commitment. */
+  /** EVM chain id of the settlement chain. */
+  chainId: bigint;
+  /** Address of the `LoanSettlement` deployment. */
+  verifyingContract: Address;
+  /** The on-chain loan id, which is the domain-separated terms commitment. */
   loanId: Hex;
   /** SHA-256 of the canonical agreement text. */
   agreementHash: Hex;
@@ -40,9 +54,16 @@ export interface AgreementConfirmation {
 
 /** The exact UTF-8 message both parties sign. */
 export function confirmationMessage(input: AgreementConfirmation): Uint8Array {
+  const chainId = input.chainId;
+  if (chainId < 0n || chainId > 2n ** 256n - 1n) {
+    throw new TypeError("chainId does not fit in uint256");
+  }
+  const verifyingContract = requireAddress("verifyingContract", input.verifyingContract);
   const loanId = requireBytes32("loanId", input.loanId);
   const agreementHash = requireBytes32("agreementHash", input.agreementHash);
-  return new TextEncoder().encode(`${CONFIRMATION_DOMAIN}|${loanId}|${agreementHash}`);
+  return new TextEncoder().encode(
+    `${CONFIRMATION_DOMAIN}|${chainId.toString(10)}|${verifyingContract}|${loanId}|${agreementHash}`,
+  );
 }
 
 /** The same bytes as text, for display and evidence. */
@@ -50,11 +71,20 @@ export function confirmationMessageText(input: AgreementConfirmation): string {
   return new TextDecoder().decode(confirmationMessage(input));
 }
 
-/** Derives both hashes from the terms, so they cannot be paired incorrectly. */
-export function confirmationFor(terms: Terms): AgreementConfirmation & { message: Uint8Array } {
+/** Derives both hashes from the terms and domain, so they cannot be mispaired. */
+export function confirmationFor(
+  terms: Terms,
+  domain: CommitmentDomain,
+): AgreementConfirmation & { message: Uint8Array } {
   const agreementHash = agreementHashOf(terms);
-  const loanId = commitmentOf(terms);
-  return { loanId, agreementHash, message: confirmationMessage({ loanId, agreementHash }) };
+  const loanId = commitmentOf(terms, domain);
+  const confirmation = {
+    chainId: domain.chainId,
+    verifyingContract: domain.verifyingContract,
+    loanId,
+    agreementHash,
+  };
+  return { ...confirmation, message: confirmationMessage(confirmation) };
 }
 
 export type SignConfirmationFailureCode = "signer-failed";
@@ -67,14 +97,15 @@ export type SignConfirmationResult =
   | { ok: false; code: SignConfirmationFailureCode; message: string };
 
 /**
- * Signs the confirmation derived from `terms`. No key material passes through
- * this module; the caller supplies the signer.
+ * Signs the confirmation derived from `terms` and `domain`. No key material
+ * passes through this module; the caller supplies the signer.
  */
 export async function signAgreementConfirmation(input: {
   terms: Terms;
+  domain: CommitmentDomain;
   signer: MessageSigner;
 }): Promise<SignConfirmationResult> {
-  const confirmation = confirmationFor(input.terms);
+  const confirmation = confirmationFor(input.terms, input.domain);
   let signature: unknown;
   try {
     signature = await input.signer.sign(confirmation.message);
@@ -88,6 +119,8 @@ export async function signAgreementConfirmation(input: {
   return {
     ok: true,
     value: {
+      chainId: confirmation.chainId,
+      verifyingContract: confirmation.verifyingContract,
       loanId: confirmation.loanId,
       agreementHash: confirmation.agreementHash,
       message: confirmation.message,
@@ -98,7 +131,9 @@ export async function signAgreementConfirmation(input: {
 
 export interface VerifyConfirmationInput {
   terms: Terms;
-  /** Chain id the confirmation was signed for. */
+  /** The EVM chain id and contract address the confirmation claims. */
+  domain: CommitmentDomain;
+  /** QoreChain native chain id, as QoreSign prefixes it (`qorechain-diana`). */
   chainId: string;
   /** The `qor1...` account expected to have signed (borrower or lender). */
   signer: string;
@@ -110,13 +145,14 @@ export interface VerifyConfirmationInput {
 
 /**
  * Verifies a confirmation against the expected signer's on-chain key. The
- * post-quantum part is required by the underlying verifier. The terms are
- * recomputed here, so a confirmation for different terms fails.
+ * post-quantum part is required by the underlying verifier. Both hashes and the
+ * domain are recomputed here, so a confirmation for other terms, another chain
+ * id or another contract address fails.
  */
 export async function verifyAgreementConfirmation(
   input: VerifyConfirmationInput,
 ): Promise<VerifyHybridMessageResult> {
-  const confirmation = confirmationFor(input.terms);
+  const confirmation = confirmationFor(input.terms, input.domain);
   return verifyHybridMessage({
     chainId: input.chainId,
     signer: input.signer,

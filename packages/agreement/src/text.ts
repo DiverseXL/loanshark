@@ -8,8 +8,8 @@
 // ASSUMPTION (recorded in ADR-0010): this layout is this project's format, not
 // a QoreChain standard. Changing it changes every agreement hash.
 
-import { sha256 } from "viem";
 import type { Hex } from "viem";
+import { sha256 } from "viem";
 import type { Terms } from "./terms.js";
 import { assertTermsShape } from "./terms.js";
 

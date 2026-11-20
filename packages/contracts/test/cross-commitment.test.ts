@@ -1,44 +1,30 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, it } from "node:test";
 import { network } from "hardhat";
+import { commitmentOf } from "@loanshark/agreement";
+import type { Terms } from "@loanshark/agreement";
 
-const FIXTURES = fileURLToPath(new URL("../../../fixtures/", import.meta.url));
+// REAL: the Solidity view function and the TypeScript implementation both run,
+// against each other, on the in-process Hardhat network.
+//
+// The frozen vectors are generated for chain 9800 and a TEST ONLY address, so
+// they anchor the TypeScript implementation only. This test compares the two
+// implementations at the deployment's own chain id and address, which is the
+// pair the contract actually uses.
 
-interface VectorTerms {
-  borrower: `0x${string}`;
-  lender: `0x${string}`;
-  token: `0x${string}`;
-  principal: string;
-  interest: string;
-  dueDate: string;
-  graceSeconds: string;
-  fundingDeadline: string;
-  claimDeadline: string;
-  salt: `0x${string}`;
-}
+const TERMS: Terms = {
+  borrower: "0x1111111111111111111111111111111111111111",
+  lender: "0x2222222222222222222222222222222222222222",
+  token: "0x3333333333333333333333333333333333333333",
+  principal: 1_000_000n,
+  interest: 50_000n,
+  dueDate: 1_800_000_000n,
+  graceSeconds: 259_200n,
+  fundingDeadline: 1_790_000_000n,
+  claimDeadline: 1_795_000_000n,
+  salt: `0x${"aa".repeat(32)}`,
+};
 
-interface AgreementVector {
-  name: string;
-  terms: VectorTerms;
-  loanId: `0x${string}`;
-  agreementHash: `0x${string}`;
-}
-
-const VECTORS = (
-  JSON.parse(readFileSync(join(FIXTURES, "agreement-vectors.json"), "utf8")) as {
-    vectors: AgreementVector[];
-  }
-).vectors;
-
-/**
- * The fixture's `loanId` is the output of the TypeScript `commitmentOf` when
- * the vectors were generated. `packages/agreement/test/commitment.test.ts`
- * recomputes it with the TypeScript implementation on every run. This test
- * makes the Solidity view function produce the same bytes32 for the same terms.
- */
 describe("Solidity and TypeScript commitment", async function () {
   const net = await network.create();
   // These are view-only tests; the two constructor addresses only satisfy the
@@ -49,47 +35,48 @@ describe("Solidity and TypeScript commitment", async function () {
     tokenA.address,
     tokenB.address,
   ]);
+  const publicClient = await net.viem.getPublicClient();
+  const chainId = BigInt(await publicClient.getChainId());
+  const domain = { chainId, verifyingContract: settlement.address };
 
-  it("matches every frozen TypeScript vector", async function () {
-    for (const vector of VECTORS) {
-      const terms = {
-        borrower: vector.terms.borrower,
-        lender: vector.terms.lender,
-        token: vector.terms.token,
-        principal: BigInt(vector.terms.principal),
-        interest: BigInt(vector.terms.interest),
-        dueDate: BigInt(vector.terms.dueDate),
-        graceSeconds: BigInt(vector.terms.graceSeconds),
-        fundingDeadline: BigInt(vector.terms.fundingDeadline),
-        claimDeadline: BigInt(vector.terms.claimDeadline),
-        salt: vector.terms.salt,
-      };
-      assert.equal(
-        await settlement.read.commitmentOf([terms]),
-        vector.loanId,
-        `${vector.name}: Solidity commitment differs from the TypeScript vector`,
-      );
+  it("agrees for the test deployment's chain id and address", async function () {
+    assert.equal(await settlement.read.commitmentOf([TERMS]), commitmentOf(TERMS, domain));
+  });
+
+  it("is not the terms-only hash, so the domain is part of the preimage", async function () {
+    const zeroDomain = {
+      chainId: 0n,
+      verifyingContract: "0x0000000000000000000000000000000000000000" as const,
+    };
+    assert.notEqual(await settlement.read.commitmentOf([TERMS]), commitmentOf(TERMS, zeroDomain));
+  });
+
+  it("changes when any one of the ten terms changes", async function () {
+    const base = await settlement.read.commitmentOf([TERMS]);
+    const changed = [
+      { ...TERMS, borrower: "0x9999999999999999999999999999999999999999" as const },
+      { ...TERMS, lender: "0x8888888888888888888888888888888888888888" as const },
+      { ...TERMS, token: "0x7777777777777777777777777777777777777777" as const },
+      { ...TERMS, principal: TERMS.principal + 1n },
+      { ...TERMS, interest: TERMS.interest + 1n },
+      { ...TERMS, dueDate: TERMS.dueDate + 1n },
+      { ...TERMS, graceSeconds: TERMS.graceSeconds + 1n },
+      { ...TERMS, fundingDeadline: TERMS.fundingDeadline + 1n },
+      { ...TERMS, claimDeadline: TERMS.claimDeadline + 1n },
+      { ...TERMS, salt: `0x${"ab".repeat(32)}` as const },
+    ];
+    for (const [index, terms] of changed.entries()) {
+      const next = await settlement.read.commitmentOf([terms]);
+      assert.notEqual(next, base, `term ${index} did not change the commitment`);
+      assert.equal(next, commitmentOf(terms, domain), `term ${index} disagrees with TypeScript`);
     }
   });
 
-  it("uses abi.encode, not packed encoding, so field boundaries matter", async function () {
-    const base = VECTORS[0]!;
-    const terms = {
-      borrower: base.terms.borrower,
-      lender: base.terms.lender,
-      token: base.terms.token,
-      principal: BigInt(base.terms.principal),
-      interest: BigInt(base.terms.interest),
-      dueDate: BigInt(base.terms.dueDate),
-      graceSeconds: BigInt(base.terms.graceSeconds),
-      fundingDeadline: BigInt(base.terms.fundingDeadline),
-      claimDeadline: BigInt(base.terms.claimDeadline),
-      salt: base.terms.salt,
-    };
-    const changedInterest = { ...terms, interest: terms.interest + 1n };
+  it("differs between two deployments with the same terms", async function () {
+    const other = await net.viem.deployContract("LoanSettlement", [tokenA.address, tokenB.address]);
     assert.notEqual(
-      await settlement.read.commitmentOf([terms]),
-      await settlement.read.commitmentOf([changedInterest]),
+      await settlement.read.commitmentOf([TERMS]),
+      await other.read.commitmentOf([TERMS]),
     );
   });
 });
