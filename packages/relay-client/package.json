@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@loanshark/agreement": "workspace:*",
+    "@noble/hashes": "2.4.0",
     "@loanshark/api": "workspace:*",
     "@loanshark/chain-client": "workspace:*",
     "@loanshark/qoreseal-adapter": "workspace:*",

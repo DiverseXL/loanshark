@@ -5,7 +5,6 @@
 // is returned as a typed refusal, NEVER as trusted data.
 
 import { confirmationMessage } from "@loanshark/agreement";
-import { contentAddressOf } from "@loanshark/api";
 import { verifyHybridMessage } from "@loanshark/chain-client";
 import type { EnvelopeContext, SignedEnvelope } from "@loanshark/qoreseal-adapter";
 import { verifySignedEnvelope } from "@loanshark/qoreseal-adapter";
@@ -13,6 +12,7 @@ import type { BindingStatement } from "@loanshark/seal-account";
 import { verifyBindingStatement } from "@loanshark/seal-account";
 import type { RecipientCard } from "@qorechain/qoreseal";
 import { verifyRecipientCard } from "@qorechain/qoreseal";
+import { contentAddressOf } from "./content-address.js";
 import type {
   BindingRecordInput,
   CardRecordInput,
