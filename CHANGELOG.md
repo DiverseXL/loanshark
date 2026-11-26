@@ -4,6 +4,32 @@ No release has been made. The project is built one phase at a time and each entr
 
 ## Unreleased
 
+### Step 10: the negotiation flow
+
+Added:
+
+- `packages/negotiation`: `loanshark.request.v1` and `loanshark.offer.v1` payloads, canonical JSON that forbids numbers, strict validation that rejects unknown fields and malformed decimals, exact human-to-base-unit conversion, and the off-chain state machine. 33 tests.
+- `docs/adr/0019-negotiation-flow.md`: the payloads, encoding, validation, actors, counterparty resolution, confirmation wiring, deployment config and test-tooling assumption, written before the code.
+- `apps/api`: `POST /v1/confirmations` and `GET /v1/confirmations/:loanId`, immutable and content-addressed, verifying nothing. `packages/relay-client` verifies every confirmation signature over the v2 message and refuses another loan, chain, contract, signer or role.
+- `apps/web`: four areas (Setup, Borrower, Lender, Diagnostics). Setup publishes the card and W/E binding and shows registration status; Borrower previews, seals, signs and sends a request and accepts only an eligible offer; Lender opens verified requests, composes and sends an offer and confirms the agreement. Every action shows its privacy footprint. The existing panels remain under Diagnostics.
+- `apps/web/public/deployment.json`: the deployment config; no address is hard-coded and `settlement` is null.
+- `scripts/run-relay.mjs` and `pnpm relay`: the owner-run loopback relay starter.
+- Tests: the full two-party simulation with the real relay, seal keys, QoreSeal and verifiers (MOCK account client, TEST ONLY wallet signer) and jsdom component tests for the three screens.
+- `docs/evidence/phase-10-owner-checklist.md`: blank and OWNER-SUPPLIED.
+
+Changed:
+
+- `.gitattributes` pins text to LF and keeps fixtures byte-exact; `pnpm format:check` passes on this Windows checkout.
+- `connect-src` adds exactly `http://127.0.0.1:8787` and `http://localhost:8787`, asserted by the static test.
+- `relay-client` computes content addresses with `@noble/hashes` so the Node server is not pulled into the browser bundle.
+- The vitest timeout is 60 seconds for the PBKDF2 vault cases under parallel load; no assertion changed.
+
+Not built:
+
+- No money screen: propose, approve, fund, claim, repay, withdraw, cancel and refund are not implemented.
+- No live two-party run: no real wallet signature, no owner evidence.
+- No draft persistence: reloading loses the negotiation state.
+
 ### Step 9b: provider record, domain-separated commitment, evaluator, preflight
 
 Added:

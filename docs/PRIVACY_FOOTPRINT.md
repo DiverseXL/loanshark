@@ -86,6 +86,23 @@ private transfers, no private matching and no confidential computation
   publishes the remaining outstanding amount.
 - Not private: who paid whom how much and when, and how much is still owed.
 
+### Publish agreement confirmation
+
+- Encrypted off-chain: nothing. Both parties sign a public statement.
+- Relay sees: the signer's `qor1` wallet address, the loan id, the record size,
+  the time, the client IP.
+- Public on chain: nothing directly; the confirmation is an off-chain record
+  until Step 11 proposes the loan.
+- Not private: the loan id (which commits to chain id, contract address and
+  terms), the EVM chain id, the verifying contract address, the agreement hash,
+  the signer W address, the role (`borrower` or `lender`), the raw signature and
+  the creation time. Anyone who can read the relay can see that this wallet
+  confirmed that loan id.
+
+The confirmation names no amount and no counterparty, but the loan id and the
+agreement hash are stable values. If the terms are later proposed publicly, they
+can be matched to the confirmation.
+
 ## Contract fields
 
 Every function parameter and event field of `TestUSD` and `LoanSettlement` is
