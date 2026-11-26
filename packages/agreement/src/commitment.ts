@@ -8,7 +8,7 @@
 // on one chain therefore cannot be replayed at a different address or on a
 // different chain.
 //
-// viem 2.58.0 is pinned exactly. No hash is hand-rolled: the ABI encoding and
+// viem 2.57.11 is pinned exactly. No hash is hand-rolled: the ABI encoding and
 // keccak come from viem, and the same parameter list is defined in the contract
 // test that compares the two implementations.
 

@@ -118,7 +118,7 @@ describe("preflight against the in-process network", async () => {
       amount: terms.principal,
       terms,
     };
-    const loanId = await world.settlement.read.commitmentOf([terms]);
+    const loanId = (await world.settlement.read.commitmentOf([terms])) as `0x${string}`;
     const ready = await run({ ...plan, loanId });
     assert.equal(ready.status, "ready", JSON.stringify(ready.checks));
     assert.equal(ready.tokenDecimals, 6);
@@ -149,7 +149,7 @@ describe("preflight against the in-process network", async () => {
     };
     const terms = termsFor({ token: token.address });
     await settlement.write.proposeLoan([terms], { account: world.borrower.account });
-    const loanId = await settlement.read.commitmentOf([terms]);
+    const loanId = (await settlement.read.commitmentOf([terms])) as `0x${string}`;
     const plan: PreflightPlan = {
       action: "fund",
       chainId,
@@ -194,7 +194,7 @@ describe("preflight against the in-process network", async () => {
   it("blocks claim before funding, and reports ready for the borrower while Funded", async () => {
     const terms = termsFor();
     await world.settlement.write.proposeLoan([terms], { account: world.borrower.account });
-    const loanId = await world.settlement.read.commitmentOf([terms]);
+    const loanId = (await world.settlement.read.commitmentOf([terms])) as `0x${string}`;
     const plan: PreflightPlan = {
       action: "claim",
       chainId,
@@ -227,7 +227,7 @@ describe("preflight against the in-process network", async () => {
   it("reports ready for repay within the outstanding and blocks an overpayment", async () => {
     const terms = termsFor();
     await world.settlement.write.proposeLoan([terms], { account: world.borrower.account });
-    const loanId = await world.settlement.read.commitmentOf([terms]);
+    const loanId = (await world.settlement.read.commitmentOf([terms])) as `0x${string}`;
     await world.token.write.mint([world.lender.account.address, 100n * ONE_USD]);
     await world.token.write.approve([world.settlement.address, terms.principal], {
       account: world.lender.account,
@@ -280,7 +280,7 @@ describe("preflight against the in-process network", async () => {
   it("blocks cancel and refund in the wrong state and with the wrong caller", async () => {
     const terms = termsFor();
     await world.settlement.write.proposeLoan([terms], { account: world.borrower.account });
-    const loanId = await world.settlement.read.commitmentOf([terms]);
+    const loanId = (await world.settlement.read.commitmentOf([terms])) as `0x${string}`;
     const base: PreflightPlan = {
       action: "cancel",
       chainId,
