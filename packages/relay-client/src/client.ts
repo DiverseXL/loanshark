@@ -4,7 +4,9 @@
 // before being returned to the caller. A fetched object that fails verification
 // is returned as a typed refusal, NEVER as trusted data.
 
+import { confirmationMessage } from "@loanshark/agreement";
 import { contentAddressOf } from "@loanshark/api";
+import { verifyHybridMessage } from "@loanshark/chain-client";
 import type { EnvelopeContext, SignedEnvelope } from "@loanshark/qoreseal-adapter";
 import { verifySignedEnvelope } from "@loanshark/qoreseal-adapter";
 import type { BindingStatement } from "@loanshark/seal-account";
@@ -14,6 +16,9 @@ import { verifyRecipientCard } from "@qorechain/qoreseal";
 import type {
   BindingRecordInput,
   CardRecordInput,
+  ConfirmationRecordInput,
+  GetConfirmationsOptions,
+  VerifiedConfirmation,
   CardRegistryReader,
   CardVerificationKeys,
   EnvelopeRecordInput,
@@ -368,5 +373,159 @@ export class RelayClient {
     }
 
     return { ok: true, value: record };
+  }
+
+  /** Posts a public signed confirmation. The server verifies nothing. */
+  async postConfirmation(
+    input: ConfirmationRecordInput,
+  ): Promise<RelayResult<import("@loanshark/api").StoredConfirmationRecord>> {
+    const res = await this.requestJson<{
+      confirmation: import("@loanshark/api").StoredConfirmationRecord;
+    }>("/v1/confirmations", { method: "POST", body: input, isWrite: true });
+    if (!res.ok) return res;
+    return { ok: true, value: res.value.confirmation };
+  }
+
+  /**
+   * Fetches every confirmation for a loan and verifies each signature over the
+   * ADR-0010 v2 message, with the post-quantum part mandatory. A confirmation
+   * for another loan, chain or contract is a typed refusal, never data.
+   */
+  async getConfirmations(
+    loanId: string,
+    options: GetConfirmationsOptions,
+  ): Promise<RelayResult<VerifiedConfirmation[]>> {
+    const res = await this.requestJson<{ confirmations: unknown }>(`/v1/confirmations/${loanId}`);
+    if (!res.ok) return res;
+    if (!Array.isArray(res.value.confirmations)) {
+      return {
+        ok: false,
+        refusal: "malformed-response",
+        message: "the confirmations response is not an array",
+      };
+    }
+
+    const verified: VerifiedConfirmation[] = [];
+    for (const item of res.value.confirmations) {
+      if (typeof item !== "object" || item === null) {
+        return {
+          ok: false,
+          refusal: "malformed-response",
+          message: "a confirmation is not an object",
+        };
+      }
+      const record = item as Record<string, unknown>;
+      if (record["loanId"] !== loanId) {
+        return {
+          ok: false,
+          refusal: "confirmation-invalid",
+          message: `the relay returned a confirmation for loan '${String(record["loanId"])}'`,
+        };
+      }
+      const signerW = record["signerW"];
+      const role = record["role"];
+      const chainId = record["chainId"];
+      const verifyingContract = record["verifyingContract"];
+      const agreementHash = record["agreementHash"];
+      const signature = record["signature"];
+      if (
+        typeof signerW !== "string" ||
+        (role !== "borrower" && role !== "lender") ||
+        typeof chainId !== "string" ||
+        typeof verifyingContract !== "string" ||
+        typeof agreementHash !== "string" ||
+        typeof signature !== "object" ||
+        signature === null
+      ) {
+        return {
+          ok: false,
+          refusal: "confirmation-invalid",
+          message: "a confirmation has a malformed field",
+        };
+      }
+      if (options.expectedSignerW !== undefined && signerW !== options.expectedSignerW) {
+        return {
+          ok: false,
+          refusal: "confirmation-invalid",
+          message: `the confirmation names signer '${signerW}', not '${options.expectedSignerW}'`,
+        };
+      }
+      if (options.expectedRole !== undefined && role !== options.expectedRole) {
+        return {
+          ok: false,
+          refusal: "confirmation-invalid",
+          message: `the confirmation names role '${role}', not '${options.expectedRole}'`,
+        };
+      }
+
+      let chainIdValue: bigint;
+      try {
+        chainIdValue = BigInt(chainId);
+      } catch {
+        return {
+          ok: false,
+          refusal: "confirmation-invalid",
+          message: `the confirmation chain id '${chainId}' is not a decimal integer`,
+        };
+      }
+      if (options.expectedDomain !== undefined) {
+        if (chainIdValue !== options.expectedDomain.chainId) {
+          return {
+            ok: false,
+            refusal: "confirmation-invalid",
+            message: `the confirmation is for chain ${chainId}, not ${options.expectedDomain.chainId}`,
+          };
+        }
+        if (
+          verifyingContract.toLowerCase() !== options.expectedDomain.verifyingContract.toLowerCase()
+        ) {
+          return {
+            ok: false,
+            refusal: "confirmation-invalid",
+            message: `the confirmation is for contract '${verifyingContract}', not '${options.expectedDomain.verifyingContract}'`,
+          };
+        }
+      }
+
+      let message: Uint8Array;
+      try {
+        message = confirmationMessage({
+          chainId: chainIdValue,
+          verifyingContract: verifyingContract as `0x${string}`,
+          loanId: loanId as `0x${string}`,
+          agreementHash: agreementHash as `0x${string}`,
+        });
+      } catch (err) {
+        return {
+          ok: false,
+          refusal: "confirmation-invalid",
+          message: `the confirmation fields do not form a message: ${err instanceof Error ? err.message : String(err)}`,
+        };
+      }
+
+      const check = await verifyHybridMessage({
+        chainId: options.nativeChainId ?? "qorechain-diana",
+        signer: signerW,
+        message,
+        response: signature,
+        accountClient: options.accountClient,
+      });
+      if (!check.verified) {
+        return {
+          ok: false,
+          refusal: "confirmation-invalid",
+          message: `confirmation signature refused: ${check.reason} (${check.message})`,
+        };
+      }
+
+      verified.push({
+        record: record as unknown as import("@loanshark/api").StoredConfirmationRecord,
+        signerW,
+        role,
+        loanId,
+      });
+    }
+
+    return { ok: true, value: verified };
   }
 }

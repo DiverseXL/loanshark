@@ -9,17 +9,20 @@ import { contentAddressOf } from "./canonical.js";
 import type {
   BindingRecordInput,
   CardRecordInput,
+  ConfirmationRecordInput,
   EnvelopeRecordInput,
   InboxItem,
   StoredBindingRecord,
   StoredCardRecord,
+  StoredConfirmationRecord,
   StoredEnvelopeRecord,
 } from "./types.js";
 
 type LogEntry =
   | { type: "envelope"; data: StoredEnvelopeRecord }
   | { type: "card"; data: StoredCardRecord }
-  | { type: "binding"; data: StoredBindingRecord };
+  | { type: "binding"; data: StoredBindingRecord }
+  | { type: "confirmation"; data: StoredConfirmationRecord };
 
 export interface RelayStorage {
   insertEnvelope(input: EnvelopeRecordInput): StoredEnvelopeRecord;
@@ -29,6 +32,8 @@ export interface RelayStorage {
   getCard(sealAddress: string): StoredCardRecord | undefined;
   putBinding(input: BindingRecordInput): StoredBindingRecord;
   getBinding(walletAddress: string): StoredBindingRecord | undefined;
+  insertConfirmation(input: ConfirmationRecordInput): StoredConfirmationRecord;
+  getConfirmations(loanId: string): StoredConfirmationRecord[];
   close(): void;
 }
 
@@ -36,6 +41,7 @@ export class MemoryRelayStorage implements RelayStorage {
   private readonly envelopes = new Map<string, StoredEnvelopeRecord>();
   private readonly cards = new Map<string, StoredCardRecord>();
   private readonly bindings = new Map<string, StoredBindingRecord>();
+  private readonly confirmations = new Map<string, StoredConfirmationRecord>();
   private readonly filePath: string | null;
 
   constructor(filePath?: string) {
@@ -59,6 +65,8 @@ export class MemoryRelayStorage implements RelayStorage {
           this.cards.set(entry.data.sealAddress, entry.data);
         } else if (entry.type === "binding") {
           this.bindings.set(entry.data.walletAddress, entry.data);
+        } else if (entry.type === "confirmation") {
+          this.confirmations.set(entry.data.id, entry.data);
         }
       } catch {
         // Skip corrupt or incomplete lines in the log
@@ -136,6 +144,27 @@ export class MemoryRelayStorage implements RelayStorage {
 
   getBinding(walletAddress: string): StoredBindingRecord | undefined {
     return this.bindings.get(walletAddress);
+  }
+
+  insertConfirmation(input: ConfirmationRecordInput): StoredConfirmationRecord {
+    const id = contentAddressOf(input);
+    const existing = this.confirmations.get(id);
+    if (existing) return existing;
+    const record: StoredConfirmationRecord = { id, ...input };
+    this.confirmations.set(id, record);
+    this.appendLog({ type: "confirmation", data: record });
+    return record;
+  }
+
+  getConfirmations(loanId: string): StoredConfirmationRecord[] {
+    const items: StoredConfirmationRecord[] = [];
+    for (const record of this.confirmations.values()) {
+      if (record.loanId === loanId) items.push(record);
+    }
+    items.sort((a, b) =>
+      a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : a.id < b.id ? -1 : 1,
+    );
+    return items;
   }
 
   close(): void {

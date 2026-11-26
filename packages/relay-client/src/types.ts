@@ -3,10 +3,13 @@
 import type {
   BindingRecordInput,
   CardRecordInput,
+  ConfirmationRecordInput,
+  ConfirmationRole,
   EnvelopeRecordInput,
   InboxItem,
   StoredBindingRecord,
   StoredCardRecord,
+  StoredConfirmationRecord,
   StoredEnvelopeRecord,
 } from "@loanshark/api";
 import type { PqcAccountReader } from "@loanshark/chain-client";
@@ -14,10 +17,13 @@ import type { PqcAccountReader } from "@loanshark/chain-client";
 export type {
   BindingRecordInput,
   CardRecordInput,
+  ConfirmationRecordInput,
+  ConfirmationRole,
   EnvelopeRecordInput,
   InboxItem,
   StoredBindingRecord,
   StoredCardRecord,
+  StoredConfirmationRecord,
   StoredEnvelopeRecord,
 };
 
@@ -29,7 +35,8 @@ export type RelayRefusalCode =
   | "card-invalid"
   | "binding-invalid"
   | "address-mismatch"
-  | "malformed-response";
+  | "malformed-response"
+  | "confirmation-invalid";
 
 export type RelayResult<T> =
   | { ok: true; value: T }
@@ -58,6 +65,24 @@ export interface GetEnvelopeOptions {
 
 export interface GetCardOptions {
   registry: CardVerificationKeys;
+}
+
+export interface GetConfirmationsOptions {
+  /** Reads the signer's registered ML-DSA-87 key. */
+  accountClient: PqcAccountReader;
+  /** Native chain id used in the QoreSign prefix; defaults to Diana. */
+  nativeChainId?: string;
+  /** When supplied, a confirmation for another chain or contract is refused. */
+  expectedDomain?: { chainId: bigint; verifyingContract: string };
+  expectedSignerW?: string;
+  expectedRole?: ConfirmationRole;
+}
+
+export interface VerifiedConfirmation {
+  record: StoredConfirmationRecord;
+  signerW: string;
+  role: ConfirmationRole;
+  loanId: string;
 }
 
 export interface GetBindingOptions {

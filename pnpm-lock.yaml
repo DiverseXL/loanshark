@@ -368,6 +368,9 @@ importers:
 
   packages/relay-client:
     dependencies:
+      '@loanshark/agreement':
+        specifier: workspace:*
+        version: link:../agreement
       '@loanshark/api':
         specifier: workspace:*
         version: link:../../apps/api

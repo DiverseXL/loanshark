@@ -10,6 +10,7 @@ import type {
   ApiErrorResponse,
   BindingRecordInput,
   CardRecordInput,
+  ConfirmationRecordInput,
   EnvelopeRecordInput,
 } from "./types.js";
 
@@ -17,6 +18,9 @@ const MAX_BODY_SIZE = 64 * 1024; // 64 KiB
 const SECRET_FIELD_PATTERN = /^(mnemonic|private_?key|seed|secret)$/i;
 const QOR1_ADDRESS_PATTERN = /^qor1[0-9a-z]{38,58}$/;
 const HEX_ID_PATTERN = /^[0-9a-f]{64}$/;
+const BYTES32_0X_PATTERN = /^0x[0-9a-f]{64}$/;
+const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
+const DECIMAL_PATTERN = /^(0|[1-9][0-9]*)$/;
 
 export interface RelayServerOptions {
   storage?: RelayStorage | undefined;
@@ -468,6 +472,95 @@ export class RelayServer {
         return;
       }
       this.sendJson(res, 200, { binding: stored });
+      return;
+    }
+
+    // 8. POST /v1/confirmations
+    if (method === "POST" && pathname === "/v1/confirmations") {
+      const body = await this.readBodyJson(req, res);
+      if (body === null) return;
+
+      const secretKey = findSecretField(body);
+      if (secretKey) {
+        this.sendError(
+          res,
+          400,
+          "bad-request",
+          `request contains prohibited secret field name: ${secretKey}`,
+        );
+        return;
+      }
+      if (typeof body !== "object" || body === null || Array.isArray(body)) {
+        this.sendError(res, 400, "bad-request", "request body must be an object");
+        return;
+      }
+
+      const input = body as Record<string, unknown>;
+      const loanId = input["loanId"];
+      const chainId = input["chainId"];
+      const verifyingContract = input["verifyingContract"];
+      const agreementHash = input["agreementHash"];
+      const signerW = input["signerW"];
+      const role = input["role"];
+      const signature = input["signature"];
+      const createdAt = input["createdAt"];
+
+      if (typeof loanId !== "string" || !BYTES32_0X_PATTERN.test(loanId)) {
+        this.sendError(res, 400, "bad-request", "loanId must be 0x plus 64 lowercase hex");
+        return;
+      }
+      if (typeof chainId !== "string" || !DECIMAL_PATTERN.test(chainId)) {
+        this.sendError(res, 400, "bad-request", "chainId must be a decimal string");
+        return;
+      }
+      if (typeof verifyingContract !== "string" || !EVM_ADDRESS_PATTERN.test(verifyingContract)) {
+        this.sendError(res, 400, "bad-request", "verifyingContract must be a 0x address");
+        return;
+      }
+      if (typeof agreementHash !== "string" || !BYTES32_0X_PATTERN.test(agreementHash)) {
+        this.sendError(res, 400, "bad-request", "agreementHash must be 0x plus 64 lowercase hex");
+        return;
+      }
+      if (typeof signerW !== "string" || !QOR1_ADDRESS_PATTERN.test(signerW)) {
+        this.sendError(res, 400, "bad-request", "signerW must be a valid qor1 address");
+        return;
+      }
+      if (role !== "borrower" && role !== "lender") {
+        this.sendError(res, 400, "bad-request", "role must be 'borrower' or 'lender'");
+        return;
+      }
+      if (typeof signature !== "object" || signature === null || Array.isArray(signature)) {
+        this.sendError(res, 400, "bad-request", "signature object is required");
+        return;
+      }
+      if (typeof createdAt !== "string" || !createdAt.trim()) {
+        this.sendError(res, 400, "bad-request", "createdAt timestamp is required");
+        return;
+      }
+
+      const record: ConfirmationRecordInput = {
+        loanId,
+        chainId,
+        verifyingContract,
+        agreementHash,
+        signerW,
+        role,
+        signature: signature as Record<string, unknown>,
+        createdAt,
+      };
+      const stored = this.storage.insertConfirmation(record);
+      this.sendJson(res, 201, { confirmation: stored });
+      return;
+    }
+
+    // 9. GET /v1/confirmations/:loanId
+    if (method === "GET" && pathname.startsWith("/v1/confirmations/")) {
+      const loanId = pathname.slice("/v1/confirmations/".length);
+      if (!BYTES32_0X_PATTERN.test(loanId)) {
+        this.sendError(res, 400, "bad-request", "invalid loanId; must be 0x plus 64 hex");
+        return;
+      }
+      this.sendJson(res, 200, { confirmations: this.storage.getConfirmations(loanId) });
       return;
     }
 
