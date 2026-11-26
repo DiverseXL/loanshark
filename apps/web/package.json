@@ -5,29 +5,37 @@
   "type": "module",
   "description": "LOANSHARK diagnostics surface: wallet detection, chain guard and QoreX message signing, browser only.",
   "scripts": {
-    "predev": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build && pnpm --filter @loanshark/seal-account build",
+    "predev": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build && pnpm --filter @loanshark/seal-account build && pnpm --filter @loanshark/agreement build && pnpm --filter @loanshark/negotiation build && pnpm --filter @loanshark/api build && pnpm --filter @loanshark/relay-client build",
     "dev": "vite",
-    "prebuild": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build && pnpm --filter @loanshark/seal-account build",
+    "prebuild": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build && pnpm --filter @loanshark/seal-account build && pnpm --filter @loanshark/agreement build && pnpm --filter @loanshark/negotiation build && pnpm --filter @loanshark/api build && pnpm --filter @loanshark/relay-client build",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "check:bundle": "node ../../scripts/check-web-bundle.mjs",
-    "pretest": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build && pnpm --filter @loanshark/seal-account build",
+    "pretest": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build && pnpm --filter @loanshark/seal-account build && pnpm --filter @loanshark/agreement build && pnpm --filter @loanshark/negotiation build && pnpm --filter @loanshark/api build && pnpm --filter @loanshark/relay-client build",
     "test": "vitest run --root ../.. apps/web/test",
-    "pretypecheck": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build && pnpm --filter @loanshark/seal-account build",
+    "pretypecheck": "pnpm --filter @loanshark/chain-client build && pnpm --filter @loanshark/qoreseal-adapter build && pnpm --filter @loanshark/seal-account build && pnpm --filter @loanshark/agreement build && pnpm --filter @loanshark/negotiation build && pnpm --filter @loanshark/api build && pnpm --filter @loanshark/relay-client build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "preview": "vite preview --strictPort"
   },
   "dependencies": {
+    "@loanshark/agreement": "workspace:*",
     "@loanshark/chain-client": "workspace:*",
+    "@loanshark/negotiation": "workspace:*",
+    "@loanshark/privacy-footprint": "workspace:*",
     "@loanshark/qoreseal-adapter": "workspace:*",
+    "@loanshark/relay-client": "workspace:*",
     "@loanshark/seal-account": "workspace:*",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },
   "devDependencies": {
+    "@loanshark/api": "workspace:*",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "26.6.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "5.2.0",
+    "jsdom": "^31.0.1",
     "typescript": "5.9.3",
     "vite": "7.3.8"
   }

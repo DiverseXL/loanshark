@@ -191,12 +191,14 @@ describe("forbidden transaction methods", () => {
     expect(signerFile?.text).toContain("signArbitrary.call(");
   });
 
-  it("encodes only the fixed test message for signing", () => {
+  it("encodes the fixed test message and the negotiation payload bytes only", () => {
     expect(TEST_MESSAGE).toBe("LOANSHARK test message, no funds");
     const encoders = sourceFiles
       .filter((file) => !file.path.startsWith(join("src", "vault")))
       .filter((file) => /new TextEncoder\(\)\.encode\(/.test(file.text));
-    expect(encoders.map((file) => file.path)).toEqual([join("src", "App.tsx")]);
+    expect(encoders.map((file) => file.path).sort()).toEqual(
+      [join("src", "App.tsx"), join("src", "negotiation", "codec.ts")].sort(),
+    );
     const app = sourceFiles.find((file) => file.path === join("src", "App.tsx"));
     expect(app?.text).toContain("new TextEncoder().encode(TEST_MESSAGE)");
   });
@@ -217,14 +219,21 @@ describe("static asset policy", () => {
     expect(csp).toContain("object-src 'none'");
   });
 
-  it("limits connect-src to the REST host and the EVM host", () => {
+  it("limits connect-src to the REST host, the EVM host and the loopback relay", () => {
     const connect = /connect-src ([^;]+)/.exec(csp)?.[1] ?? "";
     expect(
       connect
         .split(/\s+/)
         .filter((token) => token.length > 0)
         .sort(),
-    ).toEqual(["https://api-testnet.qore.host", "https://evm-testnet.qore.host"]);
+    ).toEqual(
+      [
+        "https://api-testnet.qore.host",
+        "https://evm-testnet.qore.host",
+        "http://127.0.0.1:8787",
+        "http://localhost:8787",
+      ].sort(),
+    );
     expect(connect).not.toContain("*");
   });
 

@@ -35,7 +35,11 @@ const describe = (error: unknown): string =>
 // Singleton vault manager for the panel
 const vaultManager = new SealVaultManager();
 
-export function SealPanel() {
+export function SealPanel({
+  onIdentityChange,
+}: {
+  onIdentityChange?: (identity: SealAccountIdentity | null) => void;
+} = {}) {
   const [generated, setGenerated] = useState<Generated | null>(null);
   const [saved, setSaved] = useState(false);
   const [card, setCard] = useState<RecipientCard | null>(null);
@@ -53,6 +57,7 @@ export function SealPanel() {
       setCard(null);
       setError(null);
       setVaultMsg(null);
+      onIdentityChange?.(result.identity);
     } catch (err) {
       setGenerated(null);
       setSaved(false);
@@ -79,6 +84,7 @@ export function SealPanel() {
     setSaved(false);
     setError(null);
     setVaultMsg(null);
+    onIdentityChange?.(null);
     vaultManager.lock();
   };
 
@@ -118,6 +124,7 @@ export function SealPanel() {
       setGenerated({ identity, phrase: "" });
       setSaved(true);
       setCard(identity.recipientCard());
+      onIdentityChange?.(identity);
       setVaultPassphrase("");
       setVaultMsg("Vault unlocked successfully.");
       setError(null);
@@ -131,6 +138,7 @@ export function SealPanel() {
     setGenerated(null);
     setSaved(false);
     setCard(null);
+    onIdentityChange?.(null);
     setVaultMsg("Vault locked: key material cleared from memory.");
   };
 
@@ -141,6 +149,7 @@ export function SealPanel() {
     setSaved(false);
     setCard(null);
     setVaultPassphrase("");
+    onIdentityChange?.(null);
     setVaultMsg("Encrypted vault deleted from storage.");
   };
 

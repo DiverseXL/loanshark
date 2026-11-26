@@ -18,6 +18,11 @@ export const ACCOUNT_PATH = "/qorechain/pqc/v1/account";
 export const DERIVED_EVM_ADDRESS = "0xd0a1453c7b8157aa0635076c33b3e24a50a923c5";
 export const TEST_MESSAGE = "LOANSHARK test message, no funds";
 
+// Build-time relay URL. The loopback default matches the local relay server;
+// no other host is allowed by the content security policy.
+export const RELAY_URL =
+  (import.meta.env["VITE_RELAY_URL"] as string | undefined) ?? "http://127.0.0.1:8787";
+
 // The signer used by the fourth negative control. It is synthetic, derived by
 // the verifier's own addressFromBytes from the 20 bytes 0x01..0x14, exactly as
 // recorded in docs/evidence/phase-01-result.md. It is not claimed to exist.

@@ -10,6 +10,9 @@
 // panels 2 and 3 and repeated above the signing button in panel 5, so a user
 // sees what they are about to sign with before the button exists.
 
+import type { RequestPayload } from "@loanshark/negotiation";
+import { RelayClient } from "@loanshark/relay-client";
+import type { SealAccountIdentity } from "@loanshark/seal-account";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -19,9 +22,20 @@ import {
   EVM_CHAIN_ID_DECIMAL,
   EVM_RPC_HOST,
   NATIVE_CHAIN_ID,
+  RELAY_URL,
   REST_HOST,
   TEST_MESSAGE,
 } from "./constants.js";
+import { BorrowerArea } from "./negotiation/BorrowerArea.js";
+import {
+  loadDeploymentConfig,
+  NOT_DEPLOYED,
+  type DeploymentConfig,
+} from "./negotiation/deployment.js";
+import { LenderArea } from "./negotiation/LenderArea.js";
+import { createRegistryReader } from "./negotiation/registry.js";
+import type { NegotiationDeps } from "./negotiation/session.js";
+import { SetupArea } from "./negotiation/SetupArea.js";
 import { DeployPanel } from "./deploy/DeployPanel.js";
 import { CLAIM_ROWS, ENCRYPTED_OFF_CHAIN, NO_ZK_CLAIM, PUBLIC_ON_CHAIN } from "./privacy.js";
 import { safeJson, summariseProvider } from "./safe-json.js";
@@ -91,6 +105,11 @@ const guardBadge = (guard: ChainGuardState | null): { className: string; text: s
   return { className: "badge pending", text: "CHAIN UNAVAILABLE" };
 };
 
+// One client for the page; it holds no secret and reads `fetch` lazily.
+const relayClient = new RelayClient({ baseUrl: RELAY_URL });
+
+type Area = "setup" | "borrower" | "lender" | "diagnostics";
+
 export function App() {
   const [detection, setDetection] = useState<DetectedWallets | null>(null);
   const [reading, setReading] = useState<ChainReading | null>(null);
@@ -106,6 +125,20 @@ export function App() {
   const [signState, setSignState] = useState<SignState>({ status: "idle" });
   const [refreshKey, setRefreshKey] = useState(0);
   const [showDeployPanel, setShowDeployPanel] = useState(false);
+  const [area, setArea] = useState<Area>("setup");
+  const [identity, setIdentity] = useState<SealAccountIdentity | null>(null);
+  const [deployment, setDeployment] = useState<DeploymentConfig>(NOT_DEPLOYED);
+  const [sentRequests, setSentRequests] = useState<RequestPayload[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadDeploymentConfig().then((config) => {
+      if (!cancelled) setDeployment(config);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const address = connection?.address ?? null;
 
@@ -291,485 +324,572 @@ export function App() {
   const badge = guardBadge(guard);
   const canSign = guard?.status === "ready" && address !== null && signState.status !== "running";
 
+  const localEvm = (evmAccount ?? DERIVED_EVM_ADDRESS) as `0x${string}`;
+  const nativeProvider = detection?.qorexNative ?? null;
+  const negotiationDeps: NegotiationDeps | null =
+    identity !== null && connection !== null && nativeProvider !== null && evmAccount !== null
+      ? {
+          relay: relayClient,
+          identity,
+          accountClient: createRestAccountReader(),
+          registry: createRegistryReader(),
+          nativeChainId: NATIVE_CHAIN_ID,
+          localW: connection.address,
+          localWEvm: localEvm,
+          walletSigner: new QorexMessageSigner({
+            native: nativeProvider,
+            address: connection.address,
+            nativeChainId: NATIVE_CHAIN_ID,
+            guard: guardNow,
+            authorize: async () => true,
+          }),
+          now: () => Math.floor(Date.now() / 1000),
+        }
+      : null;
+
   return (
     <>
       <div className="testnet-banner">
         TESTNET ONLY - QoreChain Diana - test tokens only, no monetary value
       </div>
       <div className="page">
-        <h1>LOANSHARK diagnostics</h1>
+        <h1>LOANSHARK</h1>
         <p className="muted">
-          Browser-only technical validation surface. The only signing request is the fixed message{" "}
-          <code>{TEST_MESSAGE}</code>, and only after a button press. No transaction is sent unless
-          the owner opens the testnet deployment panel and clicks a deployment button. Testnet only:
-          Diana.
+          Private financing on QoreChain Diana. Requests and offers are sealed to the
+          counterparty&apos;s seal account; the agreement is confirmed by both wallets. No money
+          screen exists yet and nothing here sends a transaction. The Diagnostics tab keeps the
+          original technical panels, including the fixed-message signing check.
         </p>
-        <div className="row">
-          <button type="button" onClick={() => setRefreshKey((value) => value + 1)}>
-            Re-detect wallets and re-read chains
-          </button>
-        </div>
+        <nav className="row" aria-label="Sections">
+          {(
+            [
+              ["setup", "Setup"],
+              ["borrower", "Borrower"],
+              ["lender", "Lender"],
+              ["diagnostics", "Diagnostics"],
+            ] as const
+          ).map(([id, label]) => (
+            <button key={id} type="button" aria-pressed={area === id} onClick={() => setArea(id)}>
+              {label}
+            </button>
+          ))}
+        </nav>
 
-        <Panel id="panel-1" title="1. QoreX detection" raw={panel1Raw}>
-          {detection === null ? (
-            <p className="muted">Detecting wallets through EIP-6963 and window.qorex...</p>
-          ) : (
-            <>
+        {area === "setup" && (
+          <SetupArea
+            deps={negotiationDeps}
+            identity={identity}
+            onIdentityChange={setIdentity}
+            walletAddress={address}
+            walletEvm={evmAccount}
+            guardReady={guard?.status === "ready"}
+            relayUrl={RELAY_URL}
+          />
+        )}
+        {area === "borrower" && (
+          <BorrowerArea
+            deps={negotiationDeps}
+            deployment={deployment}
+            tokens={deployment.tokens}
+            walletAddress={address}
+            sentRequests={sentRequests}
+            onRequestSent={(request) => setSentRequests((current) => [...current, request])}
+          />
+        )}
+        {area === "lender" && (
+          <LenderArea
+            deps={negotiationDeps}
+            deployment={deployment}
+            tokens={deployment.tokens}
+            walletAddress={address}
+            walletEvm={evmAccount === null ? null : localEvm}
+          />
+        )}
+
+        {area === "diagnostics" && (
+          <>
+            <div className="row">
+              <button type="button" onClick={() => setRefreshKey((value) => value + 1)}>
+                Re-detect wallets and re-read chains
+              </button>
+            </div>
+
+            <Panel id="panel-1" title="1. QoreX detection" raw={panel1Raw}>
+              {detection === null ? (
+                <p className="muted">Detecting wallets through EIP-6963 and window.qorex...</p>
+              ) : (
+                <>
+                  <p>
+                    QoreX native provider:{" "}
+                    <strong>{detection.qorexNative === null ? "not found" : "found"}</strong>. QoreX
+                    EVM provider:{" "}
+                    <strong>{detection.qorexEvm === null ? "not found" : "found"}</strong>.
+                  </p>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>EIP-6963 name</th>
+                        <th>rdns</th>
+                        <th>isQoreX flag</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detection.evm.length === 0 ? (
+                        <tr>
+                          <td colSpan={3}>No provider announced itself in the discovery window.</td>
+                        </tr>
+                      ) : (
+                        detection.evm.map((entry) => (
+                          <tr key={entry.info.uuid}>
+                            <td>{entry.info.name}</td>
+                            <td>
+                              <code>{entry.info.rdns}</code>
+                            </td>
+                            <td>{entry.provider.isQoreX === true ? "true" : "false or absent"}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                  <p className="muted">
+                    Discovery listens before it dispatches <code>eip6963:requestProvider</code>. An
+                    rdns is self-attested; the full list is shown rather than silently trusting one
+                    entry.
+                  </p>
+                  {detection.notes.length > 0 && (
+                    <ul className="result-list">
+                      {detection.notes.map((note) => (
+                        <li key={note}>{note}</li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </Panel>
+
+            <Panel id="panel-2" title="2. Chain guard" raw={panel2Raw}>
               <p>
-                QoreX native provider:{" "}
-                <strong>{detection.qorexNative === null ? "not found" : "found"}</strong>. QoreX EVM
-                provider: <strong>{detection.qorexEvm === null ? "not found" : "found"}</strong>.
+                Guard state: <span className={badge.className}>{badge.text}</span>
               </p>
               <table>
                 <thead>
                   <tr>
-                    <th>EIP-6963 name</th>
-                    <th>rdns</th>
-                    <th>isQoreX flag</th>
+                    <th>Lane</th>
+                    <th>Required</th>
+                    <th>Observed</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {detection.evm.length === 0 ? (
-                    <tr>
-                      <td colSpan={3}>No provider announced itself in the discovery window.</td>
-                    </tr>
-                  ) : (
-                    detection.evm.map((entry) => (
-                      <tr key={entry.info.uuid}>
-                        <td>{entry.info.name}</td>
-                        <td>
-                          <code>{entry.info.rdns}</code>
-                        </td>
-                        <td>{entry.provider.isQoreX === true ? "true" : "false or absent"}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-              <p className="muted">
-                Discovery listens before it dispatches <code>eip6963:requestProvider</code>. An rdns
-                is self-attested; the full list is shown rather than silently trusting one entry.
-              </p>
-              {detection.notes.length > 0 && (
-                <ul className="result-list">
-                  {detection.notes.map((note) => (
-                    <li key={note}>{note}</li>
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
-        </Panel>
-
-        <Panel id="panel-2" title="2. Chain guard" raw={panel2Raw}>
-          <p>
-            Guard state: <span className={badge.className}>{badge.text}</span>
-          </p>
-          <table>
-            <thead>
-              <tr>
-                <th>Lane</th>
-                <th>Required</th>
-                <th>Observed</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Native (Cosmos)</td>
-                <td>
-                  <code>{NATIVE_CHAIN_ID}</code>
-                </td>
-                <td>
-                  {reading?.nativeChainId === null || reading === null ? (
-                    <strong>not accepted</strong>
-                  ) : (
-                    <strong>{reading.nativeChainId}</strong>
-                  )}
-                  {reading?.nativeError !== null && reading !== null && (
-                    <div className="muted">enable error: {reading.nativeError}</div>
-                  )}
-                </td>
-              </tr>
-              <tr>
-                <td>EVM</td>
-                <td>
-                  <code>
-                    {EVM_CHAIN_ID} ({EVM_CHAIN_ID_DECIMAL})
-                  </code>
-                </td>
-                <td>
-                  {reading?.evmChainId === null || reading === null ? (
-                    <strong>not readable</strong>
-                  ) : (
-                    <strong>{reading.evmChainId}</strong>
-                  )}
-                  {reading?.evmError !== null && reading !== null && (
-                    <div className="muted">eth_chainId error: {reading.evmError}</div>
-                  )}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          {guard?.status === "wrong-chain" && <p className="notice bad-notice">{guard.message}</p>}
-          {guard?.status === "unavailable" && <p className="notice">{guard.message}</p>}
-          <p className="muted">
-            ASSUMPTION: the source and the runtime record expose no native chain-id getter, so a
-            resolved <code>enable(qorechain-diana)</code> is treated as the native-chain signal. A
-            failure there is a distinct wrong-chain state, not a generic error.
-          </p>
-        </Panel>
-
-        <Panel id="panel-3" title="3. Accounts" raw={panel3Raw}>
-          <h3>Native account</h3>
-          {connection === null ? (
-            <p className="muted">
-              No native account was read.{" "}
-              {connectFailure === null ? "" : `${connectFailure.code}: ${connectFailure.message}`}
-            </p>
-          ) : (
-            <table>
-              <tbody>
-                <tr>
-                  <th>bech32 address</th>
-                  <td className="address">{connection.address}</td>
-                </tr>
-                <tr>
-                  <th>getKey address</th>
-                  <td className="address">{connection.key?.address ?? "not reported"}</td>
-                </tr>
-                <tr>
-                  <th>algorithm</th>
-                  <td>{connection.key?.algo ?? "not reported"}</td>
-                </tr>
-                <tr>
-                  <th>listAccounts</th>
-                  <td>
-                    {nativeAccountsError !== null
-                      ? nativeAccountsError
-                      : nativeAccountsRaw === null
-                        ? "not read"
-                        : "read; see raw JSON"}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          )}
-
-          <h3>EVM account</h3>
-          {evmAccountsError !== null ? (
-            <p className="muted">{evmAccountsError}</p>
-          ) : evmAccounts === null ? (
-            <p className="muted">Not read.</p>
-          ) : evmAccount === null ? (
-            <p className="muted">
-              eth_accounts returned an empty list, so no comparison is possible.
-            </p>
-          ) : (
-            <>
-              <table>
-                <tbody>
                   <tr>
-                    <th>eth_accounts[0]</th>
-                    <td className="address">{evmAccount}</td>
-                  </tr>
-                  <tr>
-                    <th>ADR-0009 derived address</th>
-                    <td className="address">{DERIVED_EVM_ADDRESS}</td>
-                  </tr>
-                  <tr>
-                    <th>comparison</th>
+                    <td>Native (Cosmos)</td>
                     <td>
-                      <span className={addressMatch === "match" ? "badge good" : "badge bad"}>
-                        {addressMatch.toUpperCase()}
-                      </span>
+                      <code>{NATIVE_CHAIN_ID}</code>
+                    </td>
+                    <td>
+                      {reading?.nativeChainId === null || reading === null ? (
+                        <strong>not accepted</strong>
+                      ) : (
+                        <strong>{reading.nativeChainId}</strong>
+                      )}
+                      {reading?.nativeError !== null && reading !== null && (
+                        <div className="muted">enable error: {reading.nativeError}</div>
+                      )}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>EVM</td>
+                    <td>
+                      <code>
+                        {EVM_CHAIN_ID} ({EVM_CHAIN_ID_DECIMAL})
+                      </code>
+                    </td>
+                    <td>
+                      {reading?.evmChainId === null || reading === null ? (
+                        <strong>not readable</strong>
+                      ) : (
+                        <strong>{reading.evmChainId}</strong>
+                      )}
+                      {reading?.evmError !== null && reading !== null && (
+                        <div className="muted">eth_chainId error: {reading.evmError}</div>
+                      )}
                     </td>
                   </tr>
                 </tbody>
               </table>
-              <p className="muted">
-                This is a character comparison, not proof. The qor1-to-0x link is an ASSUMPTION in
-                ADR-0009; a match does not prove control and a mismatch does not identify the key.
-              </p>
-            </>
-          )}
-          <p className="muted">
-            Only <code>eth_accounts</code> is called. No account-request prompt is raised by this
-            page.
-          </p>
-        </Panel>
-
-        <Panel
-          id="panel-4"
-          title="4. On-chain account record (read-only fetch)"
-          raw={recordOutcome}
-        >
-          <p>
-            Read <code>{`${REST_HOST}${ACCOUNT_PATH}/{address}`}</code> with the browser fetch API.
-            No proxy is added in this step.
-          </p>
-          <div className="row">
-            <button
-              type="button"
-              onClick={() => void readRecord()}
-              disabled={address === null || recordBusy}
-            >
-              {recordBusy ? "Reading..." : "Read account record"}
-            </button>
-            {address === null && <span className="muted">A native account is required first.</span>}
-          </div>
-          {recordOutcome === null ? (
-            <p className="muted">Not requested yet.</p>
-          ) : recordOutcome.status === "ok" ? (
-            <>
-              <p>
-                <span className="badge good">HTTP {recordOutcome.httpStatus}</span> found:{" "}
-                <strong>{recordOutcome.found ? "true" : "false"}</strong>
-                {recordOutcome.account !== null && (
-                  <>
-                    {" "}
-                    ML-DSA-87 key bytes: <strong>{recordOutcome.account.publicKey.length}</strong>,
-                    algorithm id: <strong>{recordOutcome.account.algorithmId}</strong>
-                  </>
-                )}
-              </p>
-              {!recordOutcome.found && (
-                <p className="muted">
-                  The chain reports no registered PQC key for this address. Verification in panel 5
-                  cannot succeed.
-                </p>
+              {guard?.status === "wrong-chain" && (
+                <p className="notice bad-notice">{guard.message}</p>
               )}
-            </>
-          ) : recordOutcome.status === "http-error" ? (
-            <p className="notice bad-notice">
-              HTTP {recordOutcome.httpStatus}. Exact body: {recordOutcome.body}
-            </p>
-          ) : (
-            <p className="notice bad-notice">
-              {recordOutcome.message}
-              <br />
-              <strong>
-                {recordOutcome.looksLikeCors
-                  ? "This has the shape of a CORS refusal or a network failure. A browser page cannot distinguish the two."
-                  : "The request failed before a response."}
-              </strong>
-            </p>
-          )}
-          <p className="muted">
-            CORS outcome for this run:{" "}
-            <strong>
-              {recordOutcome === null
-                ? "not observed"
-                : recordOutcome.status === "network-error" && recordOutcome.looksLikeCors
-                  ? "likely blocked (or a network failure); exact error above"
-                  : recordOutcome.status === "ok" || recordOutcome.status === "http-error"
-                    ? "not blocked (a response was readable)"
-                    : "request failed before a response"}
-            </strong>
-            . Only the owner's run can confirm this host's behaviour.
-          </p>
-        </Panel>
-
-        <Panel id="panel-5" title="5. Sign the fixed test message" raw={panel5Raw}>
-          <div className="sign-summary">
-            <strong>Before you sign:</strong>
-            <table>
-              <tbody>
-                <tr>
-                  <th>Wallet address (native bech32)</th>
-                  <td className="address">{address ?? "not connected"}</td>
-                </tr>
-                <tr>
-                  <th>Native chain</th>
-                  <td>
-                    <code>{NATIVE_CHAIN_ID}</code>{" "}
-                    {reading?.nativeChainId === null || reading === null
-                      ? "(not accepted)"
-                      : "(accepted)"}
-                  </td>
-                </tr>
-                <tr>
-                  <th>EVM chain</th>
-                  <td>
-                    <code>{EVM_CHAIN_ID}</code>{" "}
-                    {reading?.evmChainId === null || reading === null
-                      ? "(not readable)"
-                      : `(reported ${reading.evmChainId})`}
-                  </td>
-                </tr>
-                <tr>
-                  <th>Guard</th>
-                  <td>
-                    <span className={badge.className}>{badge.text}</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p>
-            Message: <code>{TEST_MESSAGE}</code>
-          </p>
-          <div className="row">
-            <button type="button" onClick={() => void signFixedMessage()} disabled={!canSign}>
-              {signState.status === "running"
-                ? "Waiting for QoreX..."
-                : "Sign the fixed test message"}
-            </button>
-            {!canSign && signState.status !== "running" && (
-              <span className="muted">
-                Disabled until a native account is read and both chain checks pass.
-              </span>
-            )}
-          </div>
-          {signState.status === "failed" && (
-            <p className="notice bad-notice">
-              The wallet request failed ({signState.code}): {signState.message}. It was not retried.
-            </p>
-          )}
-          {signState.status === "done" && (
-            <>
-              <p>
-                Local verification:{" "}
-                <span
-                  className={signState.report.status === "verified" ? "badge good" : "badge bad"}
-                >
-                  {signState.report.status === "verified"
-                    ? "VERIFIED"
-                    : signState.report.status.toUpperCase()}
-                </span>
+              {guard?.status === "unavailable" && <p className="notice">{guard.message}</p>}
+              <p className="muted">
+                ASSUMPTION: the source and the runtime record expose no native chain-id getter, so a
+                resolved <code>enable(qorechain-diana)</code> is treated as the native-chain signal.
+                A failure there is a distinct wrong-chain state, not a generic error.
               </p>
-              {signState.report.verification.verified ? (
-                <p>
-                  The ML-DSA-87 part verified against the on-chain key (
-                  {signState.report.accountKeyBytes ?? "unknown"} bytes) with the post-quantum part
-                  required.
+            </Panel>
+
+            <Panel id="panel-3" title="3. Accounts" raw={panel3Raw}>
+              <h3>Native account</h3>
+              {connection === null ? (
+                <p className="muted">
+                  No native account was read.{" "}
+                  {connectFailure === null
+                    ? ""
+                    : `${connectFailure.code}: ${connectFailure.message}`}
+                </p>
+              ) : (
+                <table>
+                  <tbody>
+                    <tr>
+                      <th>bech32 address</th>
+                      <td className="address">{connection.address}</td>
+                    </tr>
+                    <tr>
+                      <th>getKey address</th>
+                      <td className="address">{connection.key?.address ?? "not reported"}</td>
+                    </tr>
+                    <tr>
+                      <th>algorithm</th>
+                      <td>{connection.key?.algo ?? "not reported"}</td>
+                    </tr>
+                    <tr>
+                      <th>listAccounts</th>
+                      <td>
+                        {nativeAccountsError !== null
+                          ? nativeAccountsError
+                          : nativeAccountsRaw === null
+                            ? "not read"
+                            : "read; see raw JSON"}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              )}
+
+              <h3>EVM account</h3>
+              {evmAccountsError !== null ? (
+                <p className="muted">{evmAccountsError}</p>
+              ) : evmAccounts === null ? (
+                <p className="muted">Not read.</p>
+              ) : evmAccount === null ? (
+                <p className="muted">
+                  eth_accounts returned an empty list, so no comparison is possible.
+                </p>
+              ) : (
+                <>
+                  <table>
+                    <tbody>
+                      <tr>
+                        <th>eth_accounts[0]</th>
+                        <td className="address">{evmAccount}</td>
+                      </tr>
+                      <tr>
+                        <th>ADR-0009 derived address</th>
+                        <td className="address">{DERIVED_EVM_ADDRESS}</td>
+                      </tr>
+                      <tr>
+                        <th>comparison</th>
+                        <td>
+                          <span className={addressMatch === "match" ? "badge good" : "badge bad"}>
+                            {addressMatch.toUpperCase()}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <p className="muted">
+                    This is a character comparison, not proof. The qor1-to-0x link is an ASSUMPTION
+                    in ADR-0009; a match does not prove control and a mismatch does not identify the
+                    key.
+                  </p>
+                </>
+              )}
+              <p className="muted">
+                Only <code>eth_accounts</code> is called. No account-request prompt is raised by
+                this page.
+              </p>
+            </Panel>
+
+            <Panel
+              id="panel-4"
+              title="4. On-chain account record (read-only fetch)"
+              raw={recordOutcome}
+            >
+              <p>
+                Read <code>{`${REST_HOST}${ACCOUNT_PATH}/{address}`}</code> with the browser fetch
+                API. No proxy is added in this step.
+              </p>
+              <div className="row">
+                <button
+                  type="button"
+                  onClick={() => void readRecord()}
+                  disabled={address === null || recordBusy}
+                >
+                  {recordBusy ? "Reading..." : "Read account record"}
+                </button>
+                {address === null && (
+                  <span className="muted">A native account is required first.</span>
+                )}
+              </div>
+              {recordOutcome === null ? (
+                <p className="muted">Not requested yet.</p>
+              ) : recordOutcome.status === "ok" ? (
+                <>
+                  <p>
+                    <span className="badge good">HTTP {recordOutcome.httpStatus}</span> found:{" "}
+                    <strong>{recordOutcome.found ? "true" : "false"}</strong>
+                    {recordOutcome.account !== null && (
+                      <>
+                        {" "}
+                        ML-DSA-87 key bytes:{" "}
+                        <strong>{recordOutcome.account.publicKey.length}</strong>, algorithm id:{" "}
+                        <strong>{recordOutcome.account.algorithmId}</strong>
+                      </>
+                    )}
+                  </p>
+                  {!recordOutcome.found && (
+                    <p className="muted">
+                      The chain reports no registered PQC key for this address. Verification in
+                      panel 5 cannot succeed.
+                    </p>
+                  )}
+                </>
+              ) : recordOutcome.status === "http-error" ? (
+                <p className="notice bad-notice">
+                  HTTP {recordOutcome.httpStatus}. Exact body: {recordOutcome.body}
                 </p>
               ) : (
                 <p className="notice bad-notice">
-                  NOT VERIFIED: {signState.report.verification.reason}.{" "}
-                  {signState.report.verification.message}. A signature that does not verify is never
-                  shown as success.
+                  {recordOutcome.message}
+                  <br />
+                  <strong>
+                    {recordOutcome.looksLikeCors
+                      ? "This has the shape of a CORS refusal or a network failure. A browser page cannot distinguish the two."
+                      : "The request failed before a response."}
+                  </strong>
                 </p>
               )}
-              <h3>Four negative controls, computed locally on the returned object</h3>
               <p className="muted">
-                These call no wallet. Control 4 relabels the fetched on-chain record with the
-                synthetic control address so the verifier reaches the key/address check; no key is
-                invented for that address. Expected: every control is refused.
+                CORS outcome for this run:{" "}
+                <strong>
+                  {recordOutcome === null
+                    ? "not observed"
+                    : recordOutcome.status === "network-error" && recordOutcome.looksLikeCors
+                      ? "likely blocked (or a network failure); exact error above"
+                      : recordOutcome.status === "ok" || recordOutcome.status === "http-error"
+                        ? "not blocked (a response was readable)"
+                        : "request failed before a response"}
+                </strong>
+                . Only the owner's run can confirm this host's behaviour.
+              </p>
+            </Panel>
+
+            <Panel id="panel-5" title="5. Sign the fixed test message" raw={panel5Raw}>
+              <div className="sign-summary">
+                <strong>Before you sign:</strong>
+                <table>
+                  <tbody>
+                    <tr>
+                      <th>Wallet address (native bech32)</th>
+                      <td className="address">{address ?? "not connected"}</td>
+                    </tr>
+                    <tr>
+                      <th>Native chain</th>
+                      <td>
+                        <code>{NATIVE_CHAIN_ID}</code>{" "}
+                        {reading?.nativeChainId === null || reading === null
+                          ? "(not accepted)"
+                          : "(accepted)"}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>EVM chain</th>
+                      <td>
+                        <code>{EVM_CHAIN_ID}</code>{" "}
+                        {reading?.evmChainId === null || reading === null
+                          ? "(not readable)"
+                          : `(reported ${reading.evmChainId})`}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>Guard</th>
+                      <td>
+                        <span className={badge.className}>{badge.text}</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                Message: <code>{TEST_MESSAGE}</code>
+              </p>
+              <div className="row">
+                <button type="button" onClick={() => void signFixedMessage()} disabled={!canSign}>
+                  {signState.status === "running"
+                    ? "Waiting for QoreX..."
+                    : "Sign the fixed test message"}
+                </button>
+                {!canSign && signState.status !== "running" && (
+                  <span className="muted">
+                    Disabled until a native account is read and both chain checks pass.
+                  </span>
+                )}
+              </div>
+              {signState.status === "failed" && (
+                <p className="notice bad-notice">
+                  The wallet request failed ({signState.code}): {signState.message}. It was not
+                  retried.
+                </p>
+              )}
+              {signState.status === "done" && (
+                <>
+                  <p>
+                    Local verification:{" "}
+                    <span
+                      className={
+                        signState.report.status === "verified" ? "badge good" : "badge bad"
+                      }
+                    >
+                      {signState.report.status === "verified"
+                        ? "VERIFIED"
+                        : signState.report.status.toUpperCase()}
+                    </span>
+                  </p>
+                  {signState.report.verification.verified ? (
+                    <p>
+                      The ML-DSA-87 part verified against the on-chain key (
+                      {signState.report.accountKeyBytes ?? "unknown"} bytes) with the post-quantum
+                      part required.
+                    </p>
+                  ) : (
+                    <p className="notice bad-notice">
+                      NOT VERIFIED: {signState.report.verification.reason}.{" "}
+                      {signState.report.verification.message}. A signature that does not verify is
+                      never shown as success.
+                    </p>
+                  )}
+                  <h3>Four negative controls, computed locally on the returned object</h3>
+                  <p className="muted">
+                    These call no wallet. Control 4 relabels the fetched on-chain record with the
+                    synthetic control address so the verifier reaches the key/address check; no key
+                    is invented for that address. Expected: every control is refused.
+                  </p>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Control</th>
+                        <th>Expected</th>
+                        <th>Result</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {signState.report.controls.map((control) => (
+                        <tr key={control.id}>
+                          <td>{control.label}</td>
+                          <td>{control.expectedReason}</td>
+                          <td>
+                            <span className={control.result.verified ? "badge bad" : "badge good"}>
+                              {control.result.verified ? "UNEXPECTEDLY VERIFIED" : "REJECTED"}
+                            </span>
+                            {!control.result.verified && (
+                              <div className="muted">
+                                {control.result.reason}
+                                {control.result.verifierCode === undefined
+                                  ? ""
+                                  : ` (${control.result.verifierCode})`}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {signState.report.status === "control-failed" && (
+                    <p className="notice bad-notice">
+                      A negative control verified. This run is not a success even though the
+                      positive check passed.
+                    </p>
+                  )}
+                </>
+              )}
+            </Panel>
+
+            <SealPanel />
+
+            <Panel
+              id="panel-6"
+              title="7. Privacy boundary"
+              raw={{
+                claimRows: CLAIM_ROWS,
+                noZeroKnowledge: NO_ZK_CLAIM,
+                encryptedOffChain: ENCRYPTED_OFF_CHAIN,
+                publicOnChain: PUBLIC_ON_CHAIN,
+              }}
+            >
+              <p className="muted">
+                Copied verbatim from the README claims table. A test compares this file with
+                README.md so the panel cannot claim more than the repository does.
               </p>
               <table>
                 <thead>
                   <tr>
-                    <th>Control</th>
-                    <th>Expected</th>
-                    <th>Result</th>
+                    <th>It does</th>
+                    <th>It does not claim</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {signState.report.controls.map((control) => (
-                    <tr key={control.id}>
-                      <td>{control.label}</td>
-                      <td>{control.expectedReason}</td>
-                      <td>
-                        <span className={control.result.verified ? "badge bad" : "badge good"}>
-                          {control.result.verified ? "UNEXPECTEDLY VERIFIED" : "REJECTED"}
-                        </span>
-                        {!control.result.verified && (
-                          <div className="muted">
-                            {control.result.reason}
-                            {control.result.verifierCode === undefined
-                              ? ""
-                              : ` (${control.result.verifierCode})`}
-                          </div>
-                        )}
-                      </td>
+                  {CLAIM_ROWS.map((row) => (
+                    <tr key={row.does}>
+                      <td>{row.does}</td>
+                      <td>{row.doesNotClaim}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {signState.report.status === "control-failed" && (
+              <h3>Encrypted off-chain</h3>
+              <ul className="result-list">
+                {ENCRYPTED_OFF_CHAIN.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <h3>Public on-chain</h3>
+              <ul className="result-list">
+                {PUBLIC_ON_CHAIN.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <p>{NO_ZK_CLAIM}</p>
+            </Panel>
+
+            <section className="panel" aria-labelledby="deploy-heading">
+              <div className="panel-head">
+                <h2 id="deploy-heading">8. Testnet deployment (owner-run)</h2>
+                <span className="badge bad">OWNER-RUN</span>
+              </div>
+              <div className="notice bad-notice">
+                <strong>TESTNET DEPLOYMENT WARNING.</strong> The panel behind this warning can ask
+                your wallet to send real transactions on QoreChain Diana. The assistant sends
+                nothing and signs nothing. Every send happens only inside a click handler for a
+                button labelled with exactly what it does, after the chain guard passes. Test tokens
+                only; no monetary value. If the lane check is rejected, stop and read the exact
+                error before doing anything else.
+              </div>
+              {!showDeployPanel ? (
+                <div className="row">
+                  <button type="button" onClick={() => setShowDeployPanel(true)}>
+                    I understand the warning: open the testnet deployment panel
+                  </button>
+                </div>
+              ) : deployProvider === null ? (
                 <p className="notice bad-notice">
-                  A negative control verified. This run is not a success even though the positive
-                  check passed.
+                  No QoreX EVM provider was found over EIP-6963, so the deployment panel cannot run.
+                  No transaction was sent.
                 </p>
+              ) : (
+                <DeployPanel provider={deployProvider} guard={guardNow} />
               )}
-            </>
-          )}
-        </Panel>
-
-        <SealPanel />
-
-        <Panel
-          id="panel-6"
-          title="7. Privacy boundary"
-          raw={{
-            claimRows: CLAIM_ROWS,
-            noZeroKnowledge: NO_ZK_CLAIM,
-            encryptedOffChain: ENCRYPTED_OFF_CHAIN,
-            publicOnChain: PUBLIC_ON_CHAIN,
-          }}
-        >
-          <p className="muted">
-            Copied verbatim from the README claims table. A test compares this file with README.md
-            so the panel cannot claim more than the repository does.
-          </p>
-          <table>
-            <thead>
-              <tr>
-                <th>It does</th>
-                <th>It does not claim</th>
-              </tr>
-            </thead>
-            <tbody>
-              {CLAIM_ROWS.map((row) => (
-                <tr key={row.does}>
-                  <td>{row.does}</td>
-                  <td>{row.doesNotClaim}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <h3>Encrypted off-chain</h3>
-          <ul className="result-list">
-            {ENCRYPTED_OFF_CHAIN.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-          <h3>Public on-chain</h3>
-          <ul className="result-list">
-            {PUBLIC_ON_CHAIN.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-          <p>{NO_ZK_CLAIM}</p>
-        </Panel>
-
-        <section className="panel" aria-labelledby="deploy-heading">
-          <div className="panel-head">
-            <h2 id="deploy-heading">8. Testnet deployment (owner-run)</h2>
-            <span className="badge bad">OWNER-RUN</span>
-          </div>
-          <div className="notice bad-notice">
-            <strong>TESTNET DEPLOYMENT WARNING.</strong> The panel behind this warning can ask your
-            wallet to send real transactions on QoreChain Diana. The assistant sends nothing and
-            signs nothing. Every send happens only inside a click handler for a button labelled with
-            exactly what it does, after the chain guard passes. Test tokens only; no monetary value.
-            If the lane check is rejected, stop and read the exact error before doing anything else.
-          </div>
-          {!showDeployPanel ? (
-            <div className="row">
-              <button type="button" onClick={() => setShowDeployPanel(true)}>
-                I understand the warning: open the testnet deployment panel
-              </button>
-            </div>
-          ) : deployProvider === null ? (
-            <p className="notice bad-notice">
-              No QoreX EVM provider was found over EIP-6963, so the deployment panel cannot run. No
-              transaction was sent.
-            </p>
-          ) : (
-            <DeployPanel provider={deployProvider} guard={guardNow} />
-          )}
-        </section>
+            </section>
+          </>
+        )}
 
         <footer>
           <p>
