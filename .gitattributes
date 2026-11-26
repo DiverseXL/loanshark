@@ -1,5 +1,21 @@
+# Normalise every text file to LF in the repository and on checkout, so a
+# Windows checkout with core.autocrlf=true does not make the format check fail
+# on files whose committed bytes are already LF.
+* text=auto eol=lf
+
 # Fixtures are raw chain and wallet responses. Their bytes are the evidence, so
 # they are stored byte for byte and never converted on checkout. Without this,
 # core.autocrlf=true rewrites the fixtures as CRLF and the SHA-256 recorded in
 # each .meta.json no longer describes the checked-out file.
 fixtures/** -text
+
+# Binary assets are never converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
