@@ -4,7 +4,12 @@ import { defineConfig } from "vitest/config";
 // gated behind LIVE_CHAIN=1 and skipped by default. See docs/adr/0006.
 export default defineConfig({
   test: {
-    include: ["packages/**/*.test.ts", "apps/**/*.test.ts", "scripts/**/*.test.mjs"],
+    include: [
+      "packages/**/*.test.ts",
+      "apps/**/*.test.ts",
+      "apps/**/*.test.tsx",
+      "scripts/**/*.test.mjs",
+    ],
     // Contract tests use Hardhat's node:test runner and an in-process EVM, not
     // Vitest. They run through `pnpm --filter @loanshark/contracts test`.
     // The node_modules exclusion keeps workspace symlinks from running the
