@@ -4,6 +4,30 @@ No release has been made. The project is built one phase at a time and each entr
 
 ## Unreleased
 
+### Step 9b: provider record, domain-separated commitment, evaluator, preflight
+
+Added:
+
+- `docs/adr/0018-confidential-computing-providers.md`: every named confidential-compute provider classified NO-GO or LAB ONLY against repository facts, with the read-only checks recorded, the gates a future provider must pass, the QoreSeal-on-npm mismatch and a provider-neutral interface as a documented boundary only. No provider code or dependency.
+- Domain separation: `loanId` is `keccak256(abi.encode(block.chainid, address(this), terms))`; `commitmentOf` in `packages/agreement` takes `{ chainId, verifyingContract }`; the confirmation message is `loanshark/v2/agreement` with the chain id and verifying contract bound in. Vectors regenerated once (chain 9800, TEST ONLY address) and refrozen; old and new file hashes recorded.
+- `LocalOfferEvaluator` in `packages/agreement`: pure, deterministic, twelve named checks with expected and actual values and a plain-language reason; malformed input fails closed. Documented as the only backend.
+- `packages/preflight`: read-only checks and an `eth_call` simulation for propose, approve, fund, claim, repay, withdraw, cancel and refund, with pass/fail/unknown per check and a fail-closed result. Tested against the real contracts in Hardhat and with a MOCK failing RPC.
+- `packages/privacy-footprint` and `docs/PRIVACY_FOOTPRINT.md`: twelve user actions and every contract field classified, with a drift test that reads the committed ABI.
+- `scripts/preflight-smoke.mjs`: two read-only Diana calls, method-allowlisted, never a transaction.
+- `scripts/gen-agreement-vectors.mjs`: guarded regenerator for the frozen vectors.
+
+Changed:
+
+- `LoanSettlement.commitmentOf` is a `view` function; the manifest was rebuilt from two clean compiles and the new bytecode hashes recorded.
+- `RelayClient.getCard` returns a `card-invalid` refusal when the registry read throws, instead of propagating the error.
+- New named contract invariants: per-token accounting, repayment bounds, the Repaid equivalence, single disbursement and the only exits.
+
+Not done:
+
+- No transaction was sent and nothing was signed live. The Diana smoke run made two read-only calls.
+- The privacy footprint is not rendered in the app; recorded as a Step 10 follow-up.
+- Recipient cards have no expiry field, so the brief's "expired card" case cannot be tested; the mismatch is recorded.
+
 ### Step 9: relay server, encrypted local vault, binding flow
 
 Added:

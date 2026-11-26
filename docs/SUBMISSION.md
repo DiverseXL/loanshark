@@ -28,6 +28,7 @@ Every status is `PENDING`. A row is only DONE when the artefact exists and the c
 | S16 | Project created on the platform: name, description, how it is made, one category, kits, testnet address, cover image, video | n/a | Owner creates and fills the project form; select Encrypted Apps; tick only kits visible in the code | PENDING |
 | S17 | Team size within 1 to 4 | n/a | Owner states the team and confirms every member is registered | PENDING |
 | S18 | QoreChain Build GitHub App installed so commits appear in the feed | n/a | Owner installs it on the public repository | PENDING |
+| S20 | The project does not overclaim confidential computation | `docs/adr/0018-confidential-computing-providers.md` records the providers evaluated and not adopted, the read-only checks and the gates a future provider must pass; `docs/PRIVACY_FOOTPRINT.md` states what is public | Nothing to do beyond keeping the claim accurate in the video and the project description | PENDING |
 | S19 | Everything in place by 2 December 2026, 23:59 UTC | n/a | Owner freezes changes on 1 December 2026 and confirms the submitted version | PENDING |
 
 ## Not a submission requirement
