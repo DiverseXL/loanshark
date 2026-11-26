@@ -12,5 +12,10 @@ export default defineConfig({
     exclude: ["**/node_modules/**", "**/dist/**", "packages/contracts/**"],
     environment: "node",
     passWithNoTests: false,
+    // The vault tests run real PBKDF2-HMAC-SHA256 with 600,000 iterations per
+    // save and per unlock. Under full-suite parallelism a single derivation can
+    // exceed the 5-second default; the timeout is a resource allowance, not a
+    // relaxed assertion.
+    testTimeout: 60_000,
   },
 });

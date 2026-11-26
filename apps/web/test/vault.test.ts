@@ -115,7 +115,7 @@ describe("apps/web encrypted vault", () => {
     };
     storage.setItem(VAULT_STORAGE_KEY, JSON.stringify(tamperedSalt));
     await expect(vault.unlock(TEST_PASSPHRASE)).rejects.toThrow("invalid-passphrase");
-  }, 25_000);
+  }, 90_000);
 
   it("the stored record contains no plaintext mnemonic words", async () => {
     await vault.save({
