@@ -163,7 +163,9 @@ describe("Borrower screen", () => {
         onRequestSent={vi.fn()}
       />,
     );
-    expect(screen.getByText(/Not deployed: the confirmation needs a settlement address/)).toBeTruthy();
+    expect(
+      screen.getByText(/Not deployed: the confirmation needs a settlement address/),
+    ).toBeTruthy();
   });
 });
 

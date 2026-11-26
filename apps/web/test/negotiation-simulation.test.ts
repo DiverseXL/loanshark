@@ -18,11 +18,7 @@ import {
   generateThrowawayIdentity,
   type ThrowawayIdentity,
 } from "@loanshark/qoreseal-adapter/testing";
-import {
-  parseAmount,
-  type OfferTermsPayload,
-  type RequestPayload,
-} from "@loanshark/negotiation";
+import { parseAmount, type OfferTermsPayload, type RequestPayload } from "@loanshark/negotiation";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   createRequest as createRequestPayload,
@@ -86,7 +82,8 @@ function makeParty(): Party {
   const wallet = makeWallet();
   const address = addressFromPublicKey(wallet.classicalKey.publicKey, "secp256k1");
   wallet.address = address.bech32;
-  const walletEvm = addressFromPublicKey(wallet.classicalKey.publicKey, "eth_secp256k1").hex as `0x${string}`;
+  const walletEvm = addressFromPublicKey(wallet.classicalKey.publicKey, "eth_secp256k1")
+    .hex as `0x${string}`;
   accountIndex.set(identity.address, identity.publicData().mlDsaPublicKey);
   kemIndex.set(identity.address, identity.publicData().mlkemPublicKey);
   accountIndex.set(wallet.address, wallet.pqKey.publicKey);
@@ -205,7 +202,13 @@ describe("two-party negotiation", () => {
       claimDeadline: String(NOW + 4_600),
       salt: randomSalt(),
     };
-    const sent = await sendOffer(lender.deps, opened.value, offerTerms, String(NOW + 500), "Offer note");
+    const sent = await sendOffer(
+      lender.deps,
+      opened.value,
+      offerTerms,
+      String(NOW + 500),
+      "Offer note",
+    );
     expect(sent.ok, JSON.stringify(sent)).toBe(true);
 
     const offers = await listInbox(borrower.deps);
@@ -280,7 +283,10 @@ describe("two-party negotiation", () => {
     if (offerTerms === undefined) throw new Error("offer terms");
     const { toContractTerms } = await import("@loanshark/negotiation");
     const terms = toContractTerms(offerTerms);
-    const otherDomain = { ...DOMAIN, verifyingContract: "0x000000000000000000000000000000000000c0df" as const };
+    const otherDomain = {
+      ...DOMAIN,
+      verifyingContract: "0x000000000000000000000000000000000000c0df" as const,
+    };
     const signed = await signConfirmation(borrower.deps, terms, otherDomain);
     if (!signed.ok) throw new Error("sign");
     const published = await publishConfirmation(borrower.deps, {
@@ -293,7 +299,11 @@ describe("two-party negotiation", () => {
     });
     expect(published.ok).toBe(true);
 
-    const refused = await fetchConfirmations(borrower.deps, signed.value.confirmation.loanId, DOMAIN);
+    const refused = await fetchConfirmations(
+      borrower.deps,
+      signed.value.confirmation.loanId,
+      DOMAIN,
+    );
     expect(refused.ok).toBe(false);
   });
 
@@ -361,7 +371,10 @@ describe("two-party negotiation", () => {
     if (offerItem === undefined) throw new Error("offer item");
     const third = makeParty();
     third.deps = depsFor(third, relay);
-    const opened = await receiveOffer({ ...third.deps, localW: borrower.wallet.address }, offerItem);
+    const opened = await receiveOffer(
+      { ...third.deps, localW: borrower.wallet.address },
+      offerItem,
+    );
     expect(opened.ok).toBe(false);
   });
 });
