@@ -201,6 +201,15 @@ because it needs no contract. When it is present, the app uses the address and
 the token decimals from the file and verifies the chain id against the chain
 guard. No address is compiled into the app.
 
+## Test tooling ASSUMPTION
+
+The browser component tests use jsdom 31.0.1, `@testing-library/react` 16.3.3
+and `@testing-library/dom` 10.4.2, pinned in `apps/web/package.json`. They are
+test-only: no testing library is imported by the app. jsdom is not a browser; it
+proves the components render and call the injected dependencies, not that QoreX
+or CSS behaves in Chrome. The simulation runs in Node instead of jsdom because
+seal-account and QoreSeal key material crosses a jsdom realm boundary.
+
 ## What is not built in this step
 
 - No money screen: nothing proposes, approves, funds, claims, repays, withdraws,
