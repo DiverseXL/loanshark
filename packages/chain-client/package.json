@@ -18,7 +18,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@qorechain/qoresign": "0.2.0"
+    "@qorechain/qoresign": "0.2.0",
+    "@scure/base": "2.4.0"
   },
   "devDependencies": {}
 }

@@ -1,0 +1,26 @@
+{
+  "file": "onchain-account-qor1hklq.json",
+  "what_it_is": "The raw body of a read-only GET to the QoreChain PQC account endpoint for the coin-60 (Ethereum) account that QoreX reports on its EVM lane. Saved unedited, including field order and whitespace.",
+  "url": "https://api-testnet.qore.host/qorechain/pqc/v1/account/qor1hklqwsqwncrmfc9m772mclkdfesz3zpv4eykrn",
+  "method": "GET",
+  "requested_on_utc": "2026-11-27T01:20:50Z",
+  "http_status": 200,
+  "content_type": "application/json",
+  "x_cosmos_block_height": "10820862",
+  "response_bytes": 3831,
+  "sha256": "17435910f700838237de3f6cfc8238b526be3362ef5156d59f15fb304b6de966",
+  "sha256_of": "The stored bytes of onchain-account-qor1hklq.json, exactly as committed.",
+  "provenance": "Fetched by curl in this repository's session. Only this one endpoint was called; no other chain call was made for Step 11a.",
+  "contains_key_material": "Public keys only: the registered ML-DSA-87 public key (2592 bytes) and the compressed secp256k1 ecdsa_pubkey (33 bytes). Both are published on chain. No private key, seed phrase or recovery code is present.",
+  "observed_fields": {
+    "address": "qor1hklqwsqwncrmfc9m772mclkdfesz3zpv4eykrn",
+    "algorithm_id": 1,
+    "algorithm_name": "dilithium5",
+    "key_type": "hybrid",
+    "created_at_height": "10819768",
+    "possession_proven": true,
+    "ecdsa_pubkey_hex": "03e0ac74935c9a1a3d2cde81dbd884d9e95d8e9a355db0188b39decb60657d646c",
+    "ml_dsa_87_public_key_length": 2592
+  },
+  "note": "The observed fields above are a reading aid. The file itself is the record; this sidecar does not replace it. created_at_height, key_type and possession_proven are identical to the owner-supplied observation (4) in docs/evidence/phase-11a-result.md, and ecdsa_pubkey_hex is identical to the owner-supplied pubKeyHex in observation (2)."
+}
