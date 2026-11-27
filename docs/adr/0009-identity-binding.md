@@ -46,20 +46,26 @@ Computed in this repository, using `@scure/base` 2.4.0 bech32 and
 The old derived address equals neither payload. It is the Ethereum form of the
 coin-118 account's `ecdsa_pubkey` only; it is not an identity on this network.
 
-Two further checks, which are negative results and are recorded as such:
+Two derivations were checked with QoreSign's own `addressFromPublicKey`
+(`packages/ts/src/keys.ts`, pinned 0.2.0), not by hand:
 
-- The standard Ethereum address of the coin-60 account's registered
-  `ecdsa_pubkey` is `0x3Ec33bD018D66aEcA1A594EE302051494Ca717BB`, not the
-  provider's `0xBDbE...882c`. So the EVM address is NOT the Ethereum-derived
-  address of the measured native key.
-- RIPEMD160(SHA256(compressed key)) for the coin-60 account is
-  `68e345b2971d124bec00c92cf868b9039432a68a`, also not the payload. The
-  coin-118 account's payload does equal RIPEMD160(SHA256(compressed key)), which
-  is the expected coin-118 rule.
+| Key | `secp256k1` form | `eth_secp256k1` form |
+|---|---|---|
+| coin-60 `03e0ac...646c` | `68e345b2...a68a` | `0xBDbE07400e9E07B4E0BBf795bC7ecd4E6028882c` |
+| coin-118 `03d9ec...acea` | `89e8eb5e...eec9` (its own payload) | `0xd0a1453c7b8157aa0635076c33b3e24a50a923c5` (the old derived address) |
 
-**BLOCKED:** how QoreChain derives a coin-60 account's address from its keys is
-NOT established. No rule is invented here. The app does not derive an EVM
-address from a public key anywhere.
+So both account rules are now explained by source-locked derivations: a coin-118
+address is RIPEMD160(SHA256(compressed key)), and the coin-60 address is the
+`eth_secp256k1` form, which equals both the bech32 payload and the provider's EVM
+address. The earlier error was not the derivation itself but treating the
+coin-118 account's Ethereum-form address as an identity on the EVM lane. The old
+`0xd0a1...` is exactly what the key derives; it simply is not the reported EVM
+account, because QoreX reports the coin-60 account's address regardless.
+
+ASSUMPTION kept deliberately: the app compares the decoded payload with
+`eth_accounts[0]` and does not derive an EVM address from a public key. The
+derivation now agrees on this account, but a comparison of the two values the
+wallet reports cannot silently drift if the derivation changes.
 
 ## Decision
 
@@ -102,18 +108,14 @@ what a signature check is for.
 - The old `0xd0a1...` address is removed as an identity wherever it was used for
   comparison or as a fallback. It survives only in historical evidence files and
   as the subject of this refutation.
-- **ADR-0014 step 4 is now known not to hold for a coin-60 account.** It required
-  W's signed classical key to derive to `walletEvmAddress` with
-  `addressFromPublicKey(publicKey, "eth_secp256k1")`. On the measured coin-60
-  account that derivation gives `0x3Ec3...`, not the EVM address, so the
-  step as written would reject the real account. It must be re-specified against
-  this ADR's rule (decode `walletAddress` with `evmAddressOfBech32` and compare
-  with `walletEvmAddress`). That change is NOT made in Step 11a: it changes a
-  verification rule and needs its own tests and evidence, so C14 stays PENDING
-  and the mismatch is recorded here and in the README limitations.
+- ADR-0014 step 4 is unaffected and now confirmed on a coin-60 account: the
+  `eth_secp256k1` form of the account's key equals the EVM address QoreX
+  reports, so the binding statement's `walletEvmAddress` can still be checked
+  against W's signed classical key (Step 11a, Task 3). C14 remains PENDING for
+  its original reason: no real countersigned statement exists.
 - `Terms.borrower` and `Terms.lender` remain explicit EVM addresses supplied by
-  the parties. The app now fills them from the verified EVM account; nothing
-  derives them from a `qor1` address.
+  the parties. The app fills them from the verified EVM account; nothing derives
+  them from a `qor1` address.
 
 ## What this does not establish
 
@@ -122,5 +124,6 @@ what a signature check is for.
   read-only account GET and no transaction or receipt query).
 - The claim that the authorisation window admits only the named recipient where
   the network supports it is the popup's wording, not a tested network rule.
-- Why the coin-60 native key and the EVM address do not relate by the standard
-  derivation is unknown. Do not build on that relationship.
+- A comparison is not proof of key control. The verified `signArbitrary`
+  signature is what ties the account to its classical and ML-DSA-87 keys
+  (ADR-0003); this ADR only says which account may sign and send.

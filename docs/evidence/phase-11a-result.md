@@ -157,7 +157,7 @@ reading that `public_key` is the ML-DSA-87 key is unchanged.
 
 | Path | Change |
 |---|---|
-| `docs/adr/0009-identity-binding.md` | Rewritten. The earlier derivation-based identity is recorded as REFUTED; the rule is now "the native account's bech32 payload equals the EVM account QoreX reports". The coin-60 address derivation is marked BLOCKED rather than guessed. |
+| `docs/adr/0009-identity-binding.md` | Rewritten. The earlier derived address is recorded as REFUTED as an identity; the rule is now "the native account's bech32 payload equals the EVM account QoreX reports". |
 | `packages/chain-client/src/bech32.ts` | New pure `evmAddressOfBech32`, with `@scure/base` 2.4.0 pinned exactly. Refuses non-canonical case, a wrong prefix, a bad checksum and a payload that is not 20 bytes. |
 | `packages/chain-client/test/bech32.test.ts` | New, 7 tests: both recorded addresses, wrong prefix, bad checksum, 32-byte payload, uppercase form, re-encode round trip. |
 | `apps/web/src/wallet/identity.ts` | New `evaluateAccountIdentity` and a read-only `readEvmAccounts`. States are `match`, `account-mismatch` (shown as `ACCOUNT_MISMATCH`) and `unreadable`; the last two block. |
@@ -171,22 +171,37 @@ reading that `public_key` is the ML-DSA-87 key is unchanged.
 | `README.md` | Limitation 14 rewritten. |
 | `docs/SUBMISSION.md` | S6 now names `qor1hklqwsqwncrmfc9m772mclkdfesz3zpv4eykrn`. |
 
-### Why step 4 of ADR-0014 became suspect
+### Why the old derived address was not an identity
 
-Three addresses were computed from, or compared with, the measured coin-60
-account. None of the two key-derived forms equals the address QoreX reports:
+The addresses below were produced with QoreSign's own `addressFromPublicKey`
+(pinned 0.2.0), not by hand or by another package:
 
 ```text
-bech32 payload of qor1hklq...                       0xbdbe07400e9e07b4e0bbf795bc7ecd4e6028882c
-QoreX eth_accounts[0]                               0xBDbE07400e9E07B4E0BBf795bC7ecd4E6028882c
-viem publicKeyToAddress(ecdsa_pubkey 03e0ac..6c)    0x3Ec33bD018D66aEcA1A594EE302051494Ca717BB
-RIPEMD160(SHA256(ecdsa_pubkey 03e0ac..6c))          68e345b2971d124bec00c92cf868b9039432a68a
+coin-60 bech32 payload                                 0xbdbe07400e9e07b4e0bbf795bc7ecd4e6028882c
+coin-60 QoreX eth_accounts[0]                          0xBDbE07400e9E07B4E0BBf795bC7ecd4E6028882c
+coin-60 key, eth_secp256k1 form                       0xBDbE07400e9E07B4E0BBf795bC7ecd4E6028882c
+coin-60 key, secp256k1 form (RIPEMD160(SHA256))        0x68e345b2971d124bec00c92cf868b9039432a68a
+coin-118 bech32 payload                                0x89e8eb5ec4882d2702be59cafa986dd40eafeec9
+coin-118 key, secp256k1 form (RIPEMD160(SHA256))       0x89e8eb5ec4882d2702be59cafa986dd40eafeec9
+coin-118 key, eth_secp256k1 form                       0xd0a1453c7b8157aa0635076c33b3e24a50a923c5
 ```
 
-For the coin-118 account the last form DOES equal its payload
-(`89e8eb5ec4882d2702be59cafa986dd40eafeec9`), which is the expected coin-118
-rule. So the coin-118 rule is confirmed and the coin-60 rule is unknown. This is
-recorded as BLOCKED in ADR-0009; no derivation is used in code.
+Both lane derivations are therefore consistent: a coin-118 account's address is
+the RIPEMD160(SHA256(compressed key)) form, and a coin-60 account's address is
+the `eth_secp256k1` form. The old `0xd0a1...` is the Ethereum form of the
+coin-118 key, which is not that account's address on either lane. The error was
+treating a key-derived address as an identity instead of comparing the account
+that QoreX reports.
+
+Correction note, for honesty: an earlier ad-hoc check in this session passed the
+33-byte compressed key to viem's `publicKeyToAddress`, which expects an
+uncompressed key, and produced the wrong value `0x3Ec33bD018D66aEcA1A594EE302051494Ca717BB`.
+That value is discarded; it was a misuse of the library, and QoreSign's own
+derivation is the recorded result.
+
+ADR-0014's verification step 4 is unaffected: for a coin-60 wallet, the
+`eth_secp256k1` form of W's signed key equals `walletEvmAddress`. This is
+confirmed on the measured account in Task 3.
 
 ### Checks run
 
@@ -209,3 +224,150 @@ wallet, chain or transaction is involved.
 The guard compares two values the wallet reports. A provider that lies about
 either value defeats it; this is a consistency check, not proof of key control.
 The full suite count is in the Task 4 section.
+
+## Task 3: the coin-60 signature
+
+### Fixture
+
+`fixtures/qorex-signarbitrary-coin60.json`, owner-supplied and stored as placed. It parsed; it was
+not reconstructed or retyped. Recorded facts, with the sidecar
+`fixtures/qorex-signarbitrary-coin60.meta.json`:
+
+```text
+message                 LOANSHARK test message, no funds
+chain                   qorechain-diana
+signer                  qor1hklqwsqwncrmfc9m772mclkdfesz3zpv4eykrn
+signatureType           ml-dsa-87-hybrid
+classical.keyType       eth_secp256k1
+classical.publicKey     33 bytes, equals the on-chain ecdsa_pubkey
+classical.signature     64 bytes
+pq.algorithmId          1
+pq.signature            6172 base64 characters, 4627 bytes
+sha256 (file bytes)     4e8b116a13b1336ff4fdce0fbf80d40cdfc3dbc8d75d54b1eddc308abf8d8041
+```
+
+### Main verification
+
+Run with `verifyHybridMessage` against the account record from
+`fixtures/onchain-account-qor1hklq.json`, with the post-quantum part required (`requirePq` is not
+configurable in this module; it is always on). Output, unedited:
+
+```json
+{
+  "verified": true,
+  "chainId": "qorechain-diana",
+  "signer": "qor1hklqwsqwncrmfc9m772mclkdfesz3zpv4eykrn",
+  "pqAlgorithmId": 1,
+  "pqPublicKeyLength": 2592
+}
+```
+
+The same result is locked by `packages/chain-client/test/verify-hybrid-message-coin60.test.ts`
+(6 tests, MOCK account client returning the saved record).
+
+### What `eth_secp256k1` means for verification
+
+From the installed `@qorechain/qoresign` 0.2.0 (`dist/chunk-CC36VDKC.js`), read on 2026-11-27:
+
+```js
+function classicalKeyTypeFor(publicKey, address) {
+  const target = parseAddress(address).bytes;
+  for (const type of ["secp256k1", "eth_secp256k1"]) {
+    if (equalBytes(addressFromPublicKey(publicKey, type).bytes, target)) return type;
+  }
+  return void 0;
+}
+...
+if (owner === void 0 || owner !== sig.classical.keyType) {
+  throw new QoreSignError("ADDRESS_MISMATCH", `the classical key does not control ${signer}`);
+}
+if (!classicalVerify(owner, pub, adr36SignBytes(signer, data), csig)) { ... }
+function digest(type, msg) { return type === "eth_secp256k1" ? keccak_256(msg) : sha256(msg); }
+```
+
+`eth_secp256k1` is accepted and enforced, not skipped: (1) both the `secp256k1` and the
+`eth_secp256k1` forms of the response's public key are derived, and one must equal the signer's 20
+bytes; (2) the matched type must equal `classical.keyType`; (3) the classical signature is verified
+over the ADR-36 document with a KECCAK-256 digest. Then the post-quantum part is required and
+verified against the on-chain key.
+
+Implication for the claim "hybrid verified": for this response it means both signature parts were
+checked, the classical part against the ADR-36 bytes under the account's declared key type, and the
+ML-DSA-87 part against the key registered on chain. It does not mean the transaction is
+ML-DSA-signed (see threat model T44 and the README claim table).
+
+Checked with QoreSign's `addressFromPublicKey`, which is what the verifier uses:
+
+```text
+coin-60  key 03e0ac..646c  secp256k1      -> 0x68e345b2971d124bec00c92cf868b9039432a68a
+coin-60  key 03e0ac..646c  eth_secp256k1  -> 0xBDbE07400e9E07B4E0BBf795bC7ecd4E6028882c  (the signer's payload and the provider address)
+coin-118 key 03d9ec..acea  secp256k1      -> 0x89e8eb5ec4882d2702be59cafa986dd40eafeec9  (that account's payload)
+coin-118 key 03d9ec..acea  eth_secp256k1  -> 0xd0a1453c7b8157aa0635076c33b3e24a50a923c5  (the old derived address)
+```
+
+### Negative controls
+
+Each control changes exactly one input. Output is the module's unedited result.
+
+**1. `pq` part removed**
+
+```json
+{
+  "verified": false,
+  "reason": "pq-part-missing",
+  "message": "the signature carries no ML-DSA-87 part",
+  "verifierCode": "PQ_LAYER_MISSING"
+}
+```
+
+**2. Message changed by one character (`funds` -> `fundz`)**
+
+```json
+{
+  "verified": false,
+  "reason": "classical-signature-invalid",
+  "message": "the classical signature does not verify",
+  "verifierCode": "CLASSICAL_SIGNATURE_INVALID"
+}
+```
+
+**3. Wrong chain ID (`qorechain-vladi`)**
+
+```json
+{
+  "verified": false,
+  "reason": "pq-signature-invalid",
+  "message": "the ML-DSA-87 signature does not verify",
+  "verifierCode": "PQ_SIGNATURE_INVALID"
+}
+```
+
+**4. Signer address changed** (to the synthetic control address used in Phase 1, with a MOCK
+account client that claims the same key is registered for it)
+
+```json
+{
+  "verified": false,
+  "reason": "signer-mismatch",
+  "message": "the classical key does not control qor1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5tfman7",
+  "verifierCode": "ADDRESS_MISMATCH"
+}
+```
+
+All four are refused, with the same codes as the coin-118 fixture in Phase 1. Nothing was adjusted
+to make the main verification pass; it passed on the first run with the fixture unchanged.
+
+### Docs updated for this finding
+
+`docs/adr/0003-envelope-authentication.md` (the coin-60 response, what `eth_secp256k1` means, the
+second limitation) and `docs/research/source-lock.md` claims 66 to 71.
+
+### Limit
+
+The signature and the message text are owner-supplied. This repository replays the saved bytes; it
+did not call the wallet and cannot prove which bytes the wallet was shown.
+
+Correction recorded for honesty: an earlier ad-hoc derivation in this session used viem's
+`publicKeyToAddress` with a 33-byte compressed key, which that function does not accept, and produced
+a wrong address. The value was discarded before it reached a conclusion; every number above comes
+from QoreSign's own `addressFromPublicKey` or from `@scure/base` decoding.

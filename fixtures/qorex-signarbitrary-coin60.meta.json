@@ -1,0 +1,23 @@
+{
+  "file": "qorex-signarbitrary-coin60.json",
+  "what_it_is": "The raw object QoreX returned from native.signArbitrary for the LOANSHARK test message, signed by the Ethereum (coin 60) account. Supplied by the owner; stored as placed, not retyped, edited or regenerated.",
+  "message": "LOANSHARK test message, no funds",
+  "chain_id": "qorechain-diana",
+  "signer": "qor1hklqwsqwncrmfc9m772mclkdfesz3zpv4eykrn",
+  "signer_evm_address": "0xBDbE07400e9E07B4E0BBf795bC7ecd4E6028882c",
+  "signature_type": "ml-dsa-87-hybrid",
+  "classical_key_type": "eth_secp256k1",
+  "pq_algorithm_id": 1,
+  "sha256": "4e8b116a13b1336ff4fdce0fbf80d40cdfc3dbc8d75d54b1eddc308abf8d8041",
+  "sha256_of": "The stored bytes of qorex-signarbitrary-coin60.json, exactly as committed.",
+  "recorded_at_utc": "2026-11-27",
+  "provenance": "Placed in fixtures/ by the owner before Step 11a. This repository did not capture it and has no HTTP status or byte count from its creation: signArbitrary signs and does not broadcast.",
+  "contains_key_material": "Public keys and signatures only: a 33-byte compressed secp256k1 public key and the two signature parts. No private key, seed phrase or recovery code is present.",
+  "integrity_checks_run": [
+    "Parses as JSON (JSON.parse).",
+    "classical.publicKey decodes to 33 bytes and classical.signature to 64 bytes.",
+    "pq.algorithmId is 1 and pq.signature decodes to 4627 bytes, the ML-DSA-87 signature length.",
+    "classical.publicKey equals the on-chain ecdsa_pubkey of qor1hklqwsqwncrmfc9m772mclkdfesz3zpv4eykrn in fixtures/onchain-account-qor1hklq.json.",
+    "The response verifies with the post-quantum part required against that account's on-chain ML-DSA-87 key; four tampering controls are refused. See docs/evidence/phase-11a-result.md."
+  ]
+}
