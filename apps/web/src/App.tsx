@@ -17,7 +17,6 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import {
   ACCOUNT_PATH,
-  DERIVED_EVM_ADDRESS,
   EVM_CHAIN_ID,
   EVM_CHAIN_ID_DECIMAL,
   EVM_RPC_HOST,
@@ -47,6 +46,8 @@ import { evaluateChainGuard, readChains } from "./wallet/chains.js";
 import type { NativeConnection } from "./wallet/connect.js";
 import { connectNative } from "./wallet/connect.js";
 import { detectQorex } from "./wallet/detect.js";
+import type { AccountIdentity } from "./wallet/identity.js";
+import { evaluateAccountIdentity, readEvmAccounts } from "./wallet/identity.js";
 import { QorexMessageSigner } from "./wallet/signer.js";
 import type { SignatureReport } from "./wallet/signing.js";
 import { runSignatureChecks } from "./wallet/signing.js";
@@ -236,12 +237,19 @@ export function App() {
 
   const evmAccount = evmAccounts?.[0] ?? null;
   const deployProvider = detection?.qorexEvm?.provider ?? null;
-  const addressMatch =
-    evmAccount === null
-      ? "not-compared"
-      : evmAccount.toLowerCase() === DERIVED_EVM_ADDRESS.toLowerCase()
-        ? "match"
-        : "mismatch";
+
+  // The ADR-0009 account guard. The panel state is rendered from the readings
+  // on screen; every signing and sending path re-reads it instead of trusting a
+  // stale result.
+  const identityState = evaluateAccountIdentity({ nativeAddress: address, evmAccounts });
+
+  const identityNow = useCallback(async (): Promise<AccountIdentity> => {
+    const reading = await readEvmAccounts(detection?.qorexEvm?.provider ?? null);
+    return evaluateAccountIdentity({
+      nativeAddress: connection?.address ?? null,
+      evmAccounts: reading.accounts,
+    });
+  }, [detection, connection]);
 
   const readRecord = async (): Promise<void> => {
     if (address === null) return;
@@ -264,6 +272,7 @@ export function App() {
       address,
       nativeChainId: NATIVE_CHAIN_ID,
       guard: guardNow,
+      accountIdentity: identityNow,
       // This callback runs only from the button handler below. It also refuses
       // any message other than the fixed one, so no other content can be sent
       // even if a future caller reached this signer.
@@ -303,6 +312,8 @@ export function App() {
       "QoreX exposes no native chain-id getter in the source or runtime record; a resolved enable(qorechain-diana) is the native-chain signal.",
   };
 
+  // Panel 3: the ADR-0009 account comparison, with the decoded bytes beside the
+  // address the provider reports. No derivation is used as an identity.
   const panel3Raw = {
     native: {
       connection,
@@ -311,8 +322,14 @@ export function App() {
       connectError: connectFailure,
     },
     evm: { accounts: evmAccounts, error: evmAccountsError },
-    adr0009DerivedAddress: DERIVED_EVM_ADDRESS,
-    comparison: addressMatch,
+    accountGuard: {
+      rule: "the native account's bech32 payload must equal eth_accounts[0] (ADR-0009)",
+      state: identityState.status,
+      nativeAddress: address,
+      nativeDecoded: identityState.status === "unreadable" ? null : identityState.nativeEvmAddress,
+      evmAccount,
+      message: identityState.status === "unreadable" ? identityState.message : null,
+    },
   };
 
   const panel5Raw = {
@@ -322,9 +339,17 @@ export function App() {
   };
 
   const badge = guardBadge(guard);
-  const canSign = guard?.status === "ready" && address !== null && signState.status !== "running";
+  const signingBlocked = identityState.status !== "match";
 
-  const localEvm = (evmAccount ?? DERIVED_EVM_ADDRESS) as `0x${string}`;
+  const canSign =
+    guard?.status === "ready" &&
+    identityState.status === "match" &&
+    address !== null &&
+    signState.status !== "running";
+
+  // `eth_accounts` answers are typed as strings by the provider interface; this
+  // narrows one that the identity rule has already compared as a 20-byte address.
+  const localEvm = evmAccount === null ? null : (evmAccount as `0x${string}`);
   const nativeProvider = detection?.qorexNative ?? null;
   const negotiationDeps: NegotiationDeps | null =
     identity !== null && connection !== null && nativeProvider !== null && evmAccount !== null
@@ -335,12 +360,13 @@ export function App() {
           registry: createRegistryReader(),
           nativeChainId: NATIVE_CHAIN_ID,
           localW: connection.address,
-          localWEvm: localEvm,
+          localWEvm: localEvm as `0x${string}`,
           walletSigner: new QorexMessageSigner({
             native: nativeProvider,
             address: connection.address,
             nativeChainId: NATIVE_CHAIN_ID,
             guard: guardNow,
+            accountIdentity: identityNow,
             authorize: async () => true,
           }),
           now: () => Math.floor(Date.now() / 1000),
@@ -565,41 +591,53 @@ export function App() {
                 </table>
               )}
 
-              <h3>EVM account</h3>
+              <h3>EVM account and the account guard</h3>
               {evmAccountsError !== null ? (
                 <p className="muted">{evmAccountsError}</p>
               ) : evmAccounts === null ? (
                 <p className="muted">Not read.</p>
-              ) : evmAccount === null ? (
-                <p className="muted">
-                  eth_accounts returned an empty list, so no comparison is possible.
-                </p>
               ) : (
                 <>
                   <table>
                     <tbody>
                       <tr>
                         <th>eth_accounts[0]</th>
-                        <td className="address">{evmAccount}</td>
+                        <td className="address">{evmAccount ?? "none reported"}</td>
                       </tr>
                       <tr>
-                        <th>ADR-0009 derived address</th>
-                        <td className="address">{DERIVED_EVM_ADDRESS}</td>
+                        <th>native account decoded (ADR-0009)</th>
+                        <td className="address">
+                          {identityState.status === "unreadable"
+                            ? "not decodable"
+                            : identityState.nativeEvmAddress}
+                        </td>
                       </tr>
                       <tr>
-                        <th>comparison</th>
+                        <th>account guard</th>
                         <td>
-                          <span className={addressMatch === "match" ? "badge good" : "badge bad"}>
-                            {addressMatch.toUpperCase()}
+                          <span
+                            className={
+                              identityState.status === "match" ? "badge good" : "badge bad"
+                            }
+                          >
+                            {identityState.status === "match"
+                              ? "MATCH"
+                              : identityState.status === "account-mismatch"
+                                ? "ACCOUNT_MISMATCH"
+                                : "NOT COMPARED"}
                           </span>
                         </td>
                       </tr>
                     </tbody>
                   </table>
+                  {identityState.status !== "match" && (
+                    <p className="notice bad-notice">{identityState.message}</p>
+                  )}
                   <p className="muted">
-                    This is a character comparison, not proof. The qor1-to-0x link is an ASSUMPTION
-                    in ADR-0009; a match does not prove control and a mismatch does not identify the
-                    key.
+                    The guard decodes the active native account&apos;s bech32 payload and requires
+                    it to equal <code>eth_accounts[0]</code>. A coin-118 account has no EVM identity
+                    under QoreX, and QoreX reports the same EVM account whichever account is active,
+                    so a mismatch blocks every signing and sending action (ADR-0009).
                   </p>
                 </>
               )}
@@ -730,7 +768,9 @@ export function App() {
                 </button>
                 {!canSign && signState.status !== "running" && (
                   <span className="muted">
-                    Disabled until a native account is read and both chain checks pass.
+                    {signingBlocked
+                      ? "Disabled: the active native account is not the EVM account QoreX reports (ACCOUNT_MISMATCH). Switch to the Ethereum (coin 60) account."
+                      : "Disabled until a native account is read and both chain checks pass."}
                   </span>
                 )}
               </div>
@@ -885,7 +925,7 @@ export function App() {
                   No transaction was sent.
                 </p>
               ) : (
-                <DeployPanel provider={deployProvider} guard={guardNow} />
+                <DeployPanel provider={deployProvider} guard={guardNow} identity={identityNow} />
               )}
             </section>
           </>

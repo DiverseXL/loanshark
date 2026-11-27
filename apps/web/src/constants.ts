@@ -4,8 +4,8 @@
 //   0x2648           source-lock claim 3 (runtime eth_chainId)
 //   REST host        source-lock claim 2
 //   EVM host         source-lock claim 4
-//   derived address  ADR-0009 (the derivation; the identity link itself is an
-//                    ASSUMPTION the owner has not yet confirmed)
+//   account rule     ADR-0009: a native account's bech32 payload equals the EVM
+//                    address QoreX reports; no address is derived from a key
 //
 // The test message is fixed by the phase brief. It is the only message this
 // page ever asks the wallet to sign.
@@ -15,7 +15,6 @@ export const EVM_CHAIN_ID_DECIMAL = 9800;
 export const REST_HOST = "https://api-testnet.qore.host";
 export const EVM_RPC_HOST = "https://evm-testnet.qore.host";
 export const ACCOUNT_PATH = "/qorechain/pqc/v1/account";
-export const DERIVED_EVM_ADDRESS = "0xd0a1453c7b8157aa0635076c33b3e24a50a923c5";
 export const TEST_MESSAGE = "LOANSHARK test message, no funds";
 
 // Build-time relay URL. The loopback default matches the local relay server;

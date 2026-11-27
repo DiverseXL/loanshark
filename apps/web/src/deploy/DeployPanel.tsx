@@ -8,6 +8,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChainGuardState } from "../wallet/chains.js";
+import type { AccountIdentity } from "../wallet/identity.js";
 import type { Eip1193Provider } from "../wallet/types.js";
 import {
   canRunStep,
@@ -26,6 +27,7 @@ import { FUSD_ADDRESS, manifest } from "./manifest.js";
 interface DeployPanelProps {
   readonly provider: Eip1193Provider;
   readonly guard: () => Promise<ChainGuardState>;
+  readonly identity: () => Promise<AccountIdentity>;
 }
 
 const stepBadge = (record: StepRecord): { className: string; text: string } => {
@@ -51,12 +53,19 @@ const stepBadge = (record: StepRecord): { className: string; text: string } => {
 
 const short = (value: string | null): string => value ?? "not available";
 
-export function DeployPanel({ provider, guard }: DeployPanelProps) {
+export function DeployPanel({ provider, guard, identity }: DeployPanelProps) {
   const guardRef = useRef(guard);
   guardRef.current = guard;
+  const identityRef = useRef(identity);
+  identityRef.current = identity;
 
   const flow = useMemo<DeployFlow>(
-    () => createDeployFlow({ provider, guard: () => guardRef.current() }),
+    () =>
+      createDeployFlow({
+        provider,
+        guard: () => guardRef.current(),
+        identity: () => identityRef.current(),
+      }),
     [provider],
   );
   const [state, setState] = useState<DeployState>(() => flow.getState());

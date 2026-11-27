@@ -11,6 +11,8 @@
 //      for every request; without it resolving true nothing is sent.
 //   3. No retry. A rejection is returned as a typed failure and the queue moves
 //      on. Nothing here resubmits.
+//   4. No signing from the wrong account. The injected account-identity check
+//      must report a match; a mismatch blocks the request (ADR-0009).
 //
 // `sign` implements the existing `MessageSigner` interface from
 // `@loanshark/qoreseal-adapter`, which returns the raw signature object and
@@ -19,6 +21,7 @@
 import type { MessageSigner } from "@loanshark/qoreseal-adapter";
 import type { ChainGuardState } from "./chains.js";
 import { classifyProviderError, describeError } from "./errors.js";
+import type { AccountIdentity } from "./identity.js";
 import type { QorexNativeProvider, Result, WalletErrorCode } from "./types.js";
 import { fail, ok } from "./types.js";
 
@@ -30,6 +33,12 @@ export interface SignerDependencies {
   readonly nativeChainId: string;
   /** Re-read on every request, so a chain change cannot be outlived. */
   readonly guard: () => Promise<ChainGuardState>;
+  /**
+   * Re-read on every request. Unless it reports a match of the native account
+   * with `eth_accounts[0]`, nothing is signed. The app always supplies it; the
+   * optional form exists so a test can prove the check is enforced when set.
+   */
+  readonly accountIdentity?: () => Promise<AccountIdentity>;
   /** The explicit user action. Returning false sends nothing. */
   readonly authorize: (message: string) => Promise<boolean>;
 }
@@ -50,6 +59,7 @@ export class QorexMessageSigner implements MessageSigner {
   readonly #address: string;
   readonly #nativeChainId: string;
   readonly #guard: () => Promise<ChainGuardState>;
+  readonly #accountIdentity: (() => Promise<AccountIdentity>) | undefined;
   readonly #authorize: (message: string) => Promise<boolean>;
   #tail: Promise<void> = Promise.resolve();
   #requests = 0;
@@ -59,6 +69,7 @@ export class QorexMessageSigner implements MessageSigner {
     this.#address = dependencies.address;
     this.#nativeChainId = dependencies.nativeChainId;
     this.#guard = dependencies.guard;
+    this.#accountIdentity = dependencies.accountIdentity;
     this.#authorize = dependencies.authorize;
   }
 
@@ -118,6 +129,21 @@ export class QorexMessageSigner implements MessageSigner {
         "wrong-chain",
         `The guard accepted ${guard.nativeChainId}, but this signer is bound to ${this.#nativeChainId}.`,
       );
+    }
+
+    if (this.#accountIdentity !== undefined) {
+      let identity: AccountIdentity;
+      try {
+        identity = await this.#accountIdentity();
+      } catch (err) {
+        return fail(
+          "account-mismatch",
+          `The account identity could not be checked: ${describeError(err)} Nothing was signed.`,
+        );
+      }
+      if (identity.status !== "match") {
+        return fail("account-mismatch", identity.message);
+      }
     }
 
     const authorised = await this.#authorize(text);

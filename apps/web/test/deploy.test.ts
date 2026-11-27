@@ -18,9 +18,11 @@ import {
 } from "../src/deploy/encoding.js";
 import { FUSD_ADDRESS, manifest } from "../src/deploy/manifest.js";
 import type { ChainGuardState } from "../src/wallet/chains.js";
+import type { AccountIdentity } from "../src/wallet/identity.js";
 import type { Eip1193Provider } from "../src/wallet/types.js";
 
-const ACCOUNT = "0xd0a1453c7b8157aa0635076c33b3e24a50a923c5";
+// The address QoreX reported for the coin-60 account (owner-supplied, Step 11a).
+const ACCOUNT = "0xbdbe07400e9e07b4e0bbf795bc7ecd4e6028882c";
 const TESTUSD = "0x1111111111111111111111111111111111111111";
 const LOAN = "0x2222222222222222222222222222222222222222";
 const HASH_A = `0x${"a".repeat(64)}` as const;
@@ -43,6 +45,22 @@ const WRONG: ChainGuardState = {
 
 const readyGuard = async (): Promise<ChainGuardState> => READY;
 const wrongGuard = async (): Promise<ChainGuardState> => WRONG;
+
+// MOCK account identity: a fixed state, not a wallet read.
+const MATCHED: AccountIdentity = {
+  status: "match",
+  nativeAddress: "qor1hklqwsqwncrmfc9m772mclkdfesz3zpv4eykrn",
+  nativeEvmAddress: ACCOUNT,
+  evmAddress: ACCOUNT,
+};
+const MISMATCHED: AccountIdentity = {
+  status: "account-mismatch",
+  nativeAddress: "qor1385wkhky3qkjwq47t8904xrd6s82lmkfjnxxsr",
+  nativeEvmAddress: "0x89e8eb5ec4882d2702be59cafa986dd40eafeec9",
+  evmAddress: ACCOUNT,
+  message: "ACCOUNT_MISMATCH: switch to the Ethereum (coin 60) account.",
+};
+const readyIdentity = async (): Promise<AccountIdentity> => MATCHED;
 
 interface Call {
   readonly method: string;
@@ -133,6 +151,7 @@ describe("deploy flow with a MOCK provider", () => {
     const flow = createDeployFlow({
       provider,
       guard: readyGuard,
+      identity: readyIdentity,
       pollIntervalMs: 0,
       sleep: noSleep,
     });
@@ -150,6 +169,7 @@ describe("deploy flow with a MOCK provider", () => {
     const flow = createDeployFlow({
       provider,
       guard: wrongGuard,
+      identity: readyIdentity,
       pollIntervalMs: 0,
       sleep: noSleep,
     });
@@ -160,6 +180,44 @@ describe("deploy flow with a MOCK provider", () => {
     expect(flow.getState().steps.lane.status).toBe("blocked");
     expect(flow.getState().steps.lane.error).toContain("0x2648");
     expect(canRunStep(flow.getState(), "testusd")).toBe(false);
+  });
+
+  it("blocks sending when the native account is not the EVM account (MOCK provider)", async () => {
+    const provider = makeProvider([{ status: "0x1", blockNumber: "0x1", contractAddress: null }]);
+    const flow = createDeployFlow({
+      provider,
+      guard: readyGuard,
+      identity: async () => MISMATCHED,
+      pollIntervalMs: 0,
+      sleep: noSleep,
+    });
+
+    await flow.runStep("lane");
+
+    // No estimate, no send, no receipt read: the account guard blocked first.
+    expect(provider.count("eth_estimateGas")).toBe(0);
+    expect(provider.count("eth_sendTransaction")).toBe(0);
+    expect(provider.count("eth_getTransactionReceipt")).toBe(0);
+    const record = flow.getState().steps.lane;
+    expect(record.status).toBe("blocked");
+    expect(record.error).toContain("ACCOUNT_MISMATCH");
+    expect(record.note).toContain("No estimate and no transaction were requested");
+  });
+
+  it("sends when the native account matches the EVM account (MOCK provider)", async () => {
+    const provider = makeProvider([{ status: "0x1", blockNumber: "0x1", contractAddress: null }]);
+    const flow = createDeployFlow({
+      provider,
+      guard: readyGuard,
+      identity: readyIdentity,
+      pollIntervalMs: 0,
+      sleep: noSleep,
+    });
+
+    await flow.runStep("lane");
+
+    expect(provider.count("eth_sendTransaction")).toBe(1);
+    expect(flow.getState().steps.lane.status).toBe("confirmed");
   });
 
   it("shows the exact rejection and does not retry it", async () => {
@@ -179,6 +237,7 @@ describe("deploy flow with a MOCK provider", () => {
     const flow = createDeployFlow({
       provider,
       guard: readyGuard,
+      identity: readyIdentity,
       pollIntervalMs: 0,
       sleep: noSleep,
     });
@@ -200,6 +259,7 @@ describe("deploy flow with a MOCK provider", () => {
     const flow = createDeployFlow({
       provider,
       guard: readyGuard,
+      identity: readyIdentity,
       pollIntervalMs: 0,
       sleep: noSleep,
     });
@@ -219,6 +279,7 @@ describe("deploy flow with a MOCK provider", () => {
     const flow = createDeployFlow({
       provider,
       guard: readyGuard,
+      identity: readyIdentity,
       pollAttempts: 3,
       pollIntervalMs: 0,
       sleep: noSleep,
@@ -240,6 +301,7 @@ describe("deploy flow with a MOCK provider", () => {
     const flow = createDeployFlow({
       provider,
       guard: readyGuard,
+      identity: readyIdentity,
       pollIntervalMs: 0,
       sleep: noSleep,
     });
@@ -267,6 +329,7 @@ describe("deploy flow with a MOCK provider", () => {
     const flow = createDeployFlow({
       provider,
       guard: readyGuard,
+      identity: readyIdentity,
       pollIntervalMs: 0,
       sleep: noSleep,
     });

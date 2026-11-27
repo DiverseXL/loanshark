@@ -10,6 +10,7 @@
 // This module never signs, never stores keys and never writes to storage.
 
 import type { ChainGuardState } from "../wallet/chains.js";
+import type { AccountIdentity } from "../wallet/identity.js";
 import type { Eip1193Provider } from "../wallet/types.js";
 import {
   addressFromWord,
@@ -153,6 +154,11 @@ export function canRunStep(state: DeployState, id: StepId): boolean {
 export interface DeployFlowOptions {
   readonly provider: Eip1193Provider;
   readonly guard: () => Promise<ChainGuardState>;
+  /**
+   * The ADR-0009 account guard, re-read before every send. The panel always
+   * supplies it; a mismatch blocks the step before any estimate or send.
+   */
+  readonly identity: () => Promise<AccountIdentity>;
   /** Default 60. The number of receipt polls before a visible timeout. */
   readonly pollAttempts?: number;
   /** Default 2000 ms. */
@@ -178,7 +184,7 @@ const wait = (ms: number): Promise<void> =>
   });
 
 export function createDeployFlow(options: DeployFlowOptions): DeployFlow {
-  const { provider, guard } = options;
+  const { provider, guard, identity } = options;
   const pollAttempts = options.pollAttempts ?? 60;
   const pollIntervalMs = options.pollIntervalMs ?? 2000;
   const sleep = options.sleep ?? wait;
@@ -289,6 +295,29 @@ export function createDeployFlow(options: DeployFlowOptions): DeployFlow {
         status: "blocked",
         error: guardState.message,
         note: "Chain guard did not pass. No estimate and no transaction were requested.",
+      });
+      return;
+    }
+
+    // The account guard: the native account must be the one behind the EVM
+    // address QoreX reports. A coin-118 account has no EVM identity under
+    // QoreX, so this stops before any estimate or send (ADR-0009).
+    let identityState: AccountIdentity;
+    try {
+      identityState = await identity();
+    } catch (error) {
+      patchStep(id, {
+        status: "blocked",
+        error: rawError(error),
+        note: "The account identity check threw, so no estimate and no transaction were requested.",
+      });
+      return;
+    }
+    if (identityState.status !== "match") {
+      patchStep(id, {
+        status: "blocked",
+        error: identityState.message,
+        note: "The account identity check did not pass. No estimate and no transaction were requested.",
       });
       return;
     }

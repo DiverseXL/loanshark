@@ -4,6 +4,13 @@ Status: Accepted, 2026-11-19, **pending owner-run evidence**. The binding statem
 and tested offline only. No real QoreX signature has been combined with a real seal-account signature
 yet; C14 is PENDING.
 
+**Step 11a, 2026-11-27:** verification step 4 below is known NOT to hold for the measured coin-60
+account, and must be re-specified. QoreX's EVM account is not the `eth_secp256k1`-derived address of
+the native key; it is the 20 bytes the account's own bech32 address carries. ADR-0009 now owns the
+identity rule, and step 4 must be replaced by a `evmAddressOfBech32(walletAddress)` comparison in a
+later step. Nothing in this ADR was made live in Step 11a, and the code in `apps/web` blocks
+signing and sending on an account mismatch (ADR-0009).
+
 Context: QoreChain accounts have one ML-DSA-87 key and at most one registered ML-KEM key. This
 project needs two different authorities:
 
@@ -69,10 +76,13 @@ Verification, in order:
    `addressFromPublicKey(publicKey, "eth_secp256k1").hex`, and require it to equal
    `walletEvmAddress`.
 
-Step 4 proves that the recorded EVM address is the `0x` form of the same secp256k1 key that W used to
-sign the statement. It does **not** prove that QoreX's EVM lane uses that key for W's transactions;
-that remains the ADR-0009 ASSUMPTION. A separate `eth_signTypedData_v4` or `personal_sign` proof from
-the EVM account would be stronger and is deferred.
+Step 4 was written as a proof that the recorded EVM address is the `0x` form of the same secp256k1
+key that W used to sign the statement. Step 11a refuted that for a coin-60 account: the standard
+derivation of the coin-60 account's registered key gives `0x3Ec33bD018D66aEcA1A594EE302051494Ca717BB`
+while QoreX reports `0xBDbE07400e9E07B4E0BBf795bC7ecd4E6028882c`, which is the payload of the
+account's own bech32 address. Step 4 would therefore reject the real account. It is NOT changed in
+Step 11a; see ADR-0009 and the README limitations. A separate `eth_signTypedData_v4` or
+`personal_sign` proof from the EVM account would be stronger and is deferred.
 
 ## ASSUMPTIONS and alternatives
 
@@ -140,9 +150,11 @@ The frozen encodings do **not** change in this step:
   produce a true statement for its own pair. The statement does not prove the party is who they claim
   off-chain, and it does not prevent a party from binding a W it controls to an E it also controls
   while presenting a different name. Identity attestation is out of scope.
-- **The EVM-address link is still an assumption.** Step 4 of verification proves the address is the
-  `0x` form of W's signing key; it does not prove QoreX sends that key's transactions. ADR-0009's
-  owner check remains required.
+- **The EVM-address link is a runtime comparison, not a key derivation.** QoreX reports one EVM
+  account regardless of the active native account (ADR-0009, Step 11a). The app compares that account
+  with the active native account's bech32 payload and blocks signing and sending on a mismatch. The
+  ADR-0014 step-4 derivation is known to fail on the measured coin-60 account and is not used by the
+  app.
 - **Replay inside the expiry window.** A valid statement can be presented to any counterparty until
   it expires. It is not bound to a loan, a counterparty or a nonce. Per-loan binding is deferred.
 - **Two mnemonics per party.** The owner must back up W's wallet recovery material and E's mnemonic

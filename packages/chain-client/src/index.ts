@@ -2,6 +2,8 @@
 // takes an injected account client, and the spike is not exported.
 export const CHAIN_CLIENT_PACKAGE = "@loanshark/chain-client";
 
+export type { Bech32AddressFailure, EvmAddressResult } from "./bech32.js";
+export { evmAddressOfBech32, QOR_ADDRESS_PREFIX } from "./bech32.js";
 export type {
   OnChainPqcAccount,
   PqcAccountReader,

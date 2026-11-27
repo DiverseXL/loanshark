@@ -25,7 +25,10 @@ export type WalletErrorCode =
   /** The wallet answered with something that is not a signature object. */
   | "malformed-response"
   /** The on-chain account record could not be read or decoded. */
-  | "account-unavailable";
+  | "account-unavailable"
+  /** The active native account is not the account behind the EVM address QoreX
+   * reports (ADR-0009). Nothing is signed or sent in this state. */
+  | "account-mismatch";
 
 export interface WalletError {
   readonly ok: false;

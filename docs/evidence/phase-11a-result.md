@@ -150,3 +150,62 @@ Consistency is not proof: no transaction or receipt was queried by this reposito
 
 Limit: the owner's `algorithm dilithium5` and this file's `algorithm_name` agree; ADR-0009's
 reading that `public_key` is the ML-DSA-87 key is unchanged.
+
+## Task 2: ADR-0009, the account guard and the old derived identity
+
+### What was changed
+
+| Path | Change |
+|---|---|
+| `docs/adr/0009-identity-binding.md` | Rewritten. The earlier derivation-based identity is recorded as REFUTED; the rule is now "the native account's bech32 payload equals the EVM account QoreX reports". The coin-60 address derivation is marked BLOCKED rather than guessed. |
+| `packages/chain-client/src/bech32.ts` | New pure `evmAddressOfBech32`, with `@scure/base` 2.4.0 pinned exactly. Refuses non-canonical case, a wrong prefix, a bad checksum and a payload that is not 20 bytes. |
+| `packages/chain-client/test/bech32.test.ts` | New, 7 tests: both recorded addresses, wrong prefix, bad checksum, 32-byte payload, uppercase form, re-encode round trip. |
+| `apps/web/src/wallet/identity.ts` | New `evaluateAccountIdentity` and a read-only `readEvmAccounts`. States are `match`, `account-mismatch` (shown as `ACCOUNT_MISMATCH`) and `unreadable`; the last two block. |
+| `apps/web/src/wallet/signer.ts` | Takes the identity check and refuses to call `signArbitrary` unless it reports a match; a check that throws is also a refusal (code `account-mismatch`). |
+| `apps/web/src/deploy/flow.ts`, `DeployPanel.tsx` | The deploy flow takes the identity check and re-reads it before every step, after the chain guard and before any estimate or send. |
+| `apps/web/src/App.tsx` | Panel 3 now shows the native account's decoded bytes beside `eth_accounts[0]` and the guard state, replacing the comparison with the derived address. The signing button is disabled on a mismatch with the coin-60 explanation, and both signer constructions pass the fresh check. The `localEvm` fallback to the derived address is removed. |
+| `apps/web/src/constants.ts` | `DERIVED_EVM_ADDRESS` removed. |
+| `apps/web/test/identity.test.ts` | New, 10 tests: the pure states, the read helper, and MOCK-provider proofs that a mismatch never reaches `signArbitrary` and a match does. |
+| `apps/web/test/deploy.test.ts` | The MOCK account is now the real provider address; every case passes a MOCK identity. Two new cases: a mismatch blocks before `eth_estimateGas`, `eth_sendTransaction` and any receipt read; a match sends. |
+| `docs/adr/0014-two-account-identity.md` | Status note and step 4: the key-derived address check is known not to hold for the coin-60 account and is pending re-specification. No verification code was changed. |
+| `README.md` | Limitation 14 rewritten. |
+| `docs/SUBMISSION.md` | S6 now names `qor1hklqwsqwncrmfc9m772mclkdfesz3zpv4eykrn`. |
+
+### Why step 4 of ADR-0014 became suspect
+
+Three addresses were computed from, or compared with, the measured coin-60
+account. None of the two key-derived forms equals the address QoreX reports:
+
+```text
+bech32 payload of qor1hklq...                       0xbdbe07400e9e07b4e0bbf795bc7ecd4e6028882c
+QoreX eth_accounts[0]                               0xBDbE07400e9E07B4E0BBf795bC7ecd4E6028882c
+viem publicKeyToAddress(ecdsa_pubkey 03e0ac..6c)    0x3Ec33bD018D66aEcA1A594EE302051494Ca717BB
+RIPEMD160(SHA256(ecdsa_pubkey 03e0ac..6c))          68e345b2971d124bec00c92cf868b9039432a68a
+```
+
+For the coin-118 account the last form DOES equal its payload
+(`89e8eb5ec4882d2702be59cafa986dd40eafeec9`), which is the expected coin-118
+rule. So the coin-118 rule is confirmed and the coin-60 rule is unknown. This is
+recorded as BLOCKED in ADR-0009; no derivation is used in code.
+
+### Checks run
+
+```text
+pnpm vitest run packages/chain-client/test/bech32.test.ts
+  -> 7 passed
+
+pnpm vitest run apps/web/test/identity.test.ts apps/web/test/deploy.test.ts apps/web/test/signer.test.ts
+  -> 33 passed (identity 10, deploy 14, signer 9)
+
+pnpm --filter @loanshark/web typecheck
+  -> exit 0
+```
+
+All of these are unit tests with MOCK providers or pure functions. No browser,
+wallet, chain or transaction is involved.
+
+### Limit
+
+The guard compares two values the wallet reports. A provider that lies about
+either value defeats it; this is a consistency check, not proof of key control.
+The full suite count is in the Task 4 section.
