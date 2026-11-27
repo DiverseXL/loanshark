@@ -4,6 +4,28 @@ No release has been made. The project is built one phase at a time and each entr
 
 ## Unreleased
 
+### Step 11a: the coin-60 account, the account guard and the coin-60 signature
+
+Added:
+
+- `packages/chain-client/src/bech32.ts`: `evmAddressOfBech32`, a pure decoder for the 20 bytes a `qor1` address carries, with `@scure/base` 2.4.0 pinned exactly. It refuses a non-canonical case, a wrong prefix, a bad checksum and a payload that is not 20 bytes. 7 tests.
+- `apps/web/src/wallet/identity.ts`: the ADR-0009 account guard. States are `match`, `account-mismatch` (`ACCOUNT_MISMATCH`) and `unreadable`; the last two block. `QorexMessageSigner` and the deploy flow re-read the guard before signing or sending, and the signing button and panel 3 show it. 10 tests, plus 2 MOCK-provider deploy cases.
+- `fixtures/onchain-account-qor1hklq.json` and `fixtures/qorex-signarbitrary-coin60.json`, each with a provenance sidecar: one read-only account GET and the owner's coin-60 signature, saved unedited.
+- `packages/chain-client/test/verify-hybrid-message-coin60.test.ts`: the coin-60 response verifies against its on-chain ML-DSA-87 key with the post-quantum part required, and four tampering controls are refused. 6 tests.
+- `docs/evidence/phase-11a-result.md`: the owner's four console observations verbatim as OWNER-SUPPLIED, the bech32 decode, the on-chain record, the verification output and the negative controls.
+
+Changed:
+
+- `docs/adr/0009-identity-binding.md` rewritten: the earlier key-derived address is refuted as an identity; the rule is now that the native account's bech32 payload equals the EVM account QoreX reports. QoreX reports one EVM account regardless of the active account, and refuses EVM sends from a coin-118 account.
+- The derived `0xd0a1453c...` address is removed from `apps/web` as a comparison and as a fallback.
+- ADR-0003 records the coin-60 response and what QoreSign's `eth_secp256k1` check does; the source lock gains claims 66 to 71 (address forms, one EVM account, the window popup, the owner's receipt).
+- `docs/SUBMISSION.md` S6 names `qor1hklqwsqwncrmfc9m772mclkdfesz3zpv4eykrn`; README limitation 14 is rewritten.
+
+Not built:
+
+- Nothing was signed or sent by this repository. The owner's transaction and receipt are recorded as OWNER-SUPPLIED and not independently verified.
+- No money screen: Step 11 is not started.
+
 ### Step 10: the negotiation flow
 
 Added:

@@ -371,3 +371,76 @@ Correction recorded for honesty: an earlier ad-hoc derivation in this session us
 `publicKeyToAddress` with a 33-byte compressed key, which that function does not accept, and produced
 a wrong address. The value was discarded before it reached a conclusion; every number above comes
 from QoreSign's own `addressFromPublicKey` or from `@scure/base` decoding.
+
+## Task 4: measured checks and the documentation pass
+
+### Checks run (all from the repository root)
+
+```text
+pnpm test          -> vitest 365 passed, 1 skipped; Hardhat 53 passing; exit 0
+pnpm typecheck     -> exit 0
+pnpm format:check  -> exit 0 (177 files)
+pnpm docs:check    -> exit 0 ("all documented paths exist, every evidence file is listed, every count matches")
+```
+
+`pnpm test-counts` wrote `.tmp/test-counts.json`: vitest 365 passed with 1 skipped, Hardhat 53
+passing. That is the count the docs checker compares against.
+
+Note on `pnpm lint`: it exits 1 on five pre-existing errors in
+`packages/negotiation/src/fields.ts` (the control-character regex), which Step 11a does not touch.
+`biome lint` over every file changed in this step reports infos only and exits 0. The lint failure is
+recorded here rather than hidden or silenced.
+
+### New tests, split by what they actually exercise
+
+| File | Tests | Kind |
+|---|---|---|
+| `packages/chain-client/test/bech32.test.ts` | 7 | Pure decode of the two real addresses, plus four refusals. No network, no wallet |
+| `packages/chain-client/test/verify-hybrid-message-coin60.test.ts` | 6 | REAL saved signature and REAL saved account record, MOCK account client (no HTTP) |
+| `apps/web/test/identity.test.ts` | 10 | Pure comparison plus MOCK provider for signing; no wallet, no network |
+| `apps/web/test/deploy.test.ts` | +2 (now 14) | MOCK EIP-1193 provider; two new account-guard cases |
+
+25 new tests (7 + 6 + 10 + 2). Nothing in this step is a browser test, an end-to-end test or a live
+transaction test.
+
+### Across the whole suite
+
+| Kind | Count |
+|---|---|
+| Vitest tests executed | 365 (1 skipped: the `LIVE_CHAIN=1` test) |
+| Hardhat tests (in-process EVM) | 53 |
+| Read-only network calls made in this step | 1 (the account GET) |
+| Transactions sent by this repository | 0 |
+| Live signatures produced by this repository | 0 |
+
+Most tests use MOCK providers, MOCK account clients, throwaway keys or the in-process Hardhat
+network. The only real external artefact used as an input is the single account response and the
+owner-supplied signature fixture. The transaction, the receipt and the window popup are
+OWNER-SUPPLIED and were not verified against the chain.
+
+### Documentation updated
+
+- `docs/research/source-lock.md`: claims 66 to 71 (the QoreSign `eth_secp256k1` check, both address
+  forms, one EVM account and the code-4100 refusal, the coin-60 signature replay, the window popup,
+  the owner's receipt), with owner-supplied items labelled.
+- `docs/THREAT_MODEL.md`: T44 (the per-transaction authorisation window) and T45 (`ACCOUNT_MISMATCH`).
+- `docs/ACCEPTANCE_MATRIX.md`: new M0-8 (the EVM lane through QoreX with a coin-60 account, DONE on
+  OWNER-SUPPLIED evidence and labelled as not independently verified), M0-3 extended to the coin-60
+  signature, C27 (the account guard), C12's test count corrected to 14.
+- `docs/SUBMISSION.md`: S6 names the coin-60 address.
+- `README.md`: limitation 14 rewritten and one integration bullet added.
+- `docs/EVIDENCE.md`: this file indexed.
+- `CHANGELOG.md`: the Step 11a entry.
+- `docs/adr/0003-envelope-authentication.md`, `docs/adr/0009-identity-binding.md`,
+  `docs/adr/0014-two-account-identity.md`: the findings and their limits.
+
+### What remains BLOCKED or PENDING
+
+- No transaction was sent and no live signature was produced by this repository. M0-8 rests on the
+  owner's console record only.
+- The exact network rules of the authorisation window (single recipient, fee cap, ten minutes) are
+  the wallet popup's wording, unverified.
+- No browser or jsdom run observes the account guard; its tests use MOCK providers.
+- ADR-0014's binding verification was not exercised with a real countersigned statement; C14 stays
+  PENDING for its original reason.
+- Step 11 is not started; there is still no money screen.

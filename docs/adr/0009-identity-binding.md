@@ -47,7 +47,7 @@ The old derived address equals neither payload. It is the Ethereum form of the
 coin-118 account's `ecdsa_pubkey` only; it is not an identity on this network.
 
 Two derivations were checked with QoreSign's own `addressFromPublicKey`
-(`packages/ts/src/keys.ts`, pinned 0.2.0), not by hand:
+(`qoresign` `packages/ts/src/keys.ts`, pinned 0.2.0), not by hand:
 
 | Key | `secp256k1` form | `eth_secp256k1` form |
 |---|---|---|
